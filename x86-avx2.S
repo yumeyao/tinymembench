@@ -21,7 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#if defined(__i386__) || defined(__amd64__)
+#if defined(__amd64__)
 
 .intel_syntax noprefix
 .text
@@ -32,32 +32,19 @@
     .global \function_name
 .func \function_name
 \function_name:
-#ifdef __amd64__
-  #ifdef _WIN64
+#ifdef _WIN64
     .set DST,  rcx
     .set SRC,  rdx
     .set SIZE, r8
-  #else
+#else
     .set DST,  rdi
     .set SRC,  rsi
     .set SIZE, rdx
-  #endif
-#else
-    mov  eax,  [esp + 4]
-    mov  ecx,  [esp + 8]
-    mov  edx,  [esp + 12]
-    .set DST,  eax
-    .set SRC,  ecx
-    .set SIZE, edx
 #endif
 .endm
 
 .macro asm_function function_name
-#if defined(_WIN32) && !defined(_WIN64)
-    asm_function_helper _\function_name
-#else
-    asm_function_helper \function_name
-#endif
+asm_function_helper \function_name
 .endm
 
 .macro push3 a, b, c
@@ -76,39 +63,22 @@
 
 asm_function aligned_block_copy_movsb
 0:
-#ifdef __amd64__
     push3       rdi rsi rcx
     push3       DST SRC SIZE
     pop3        rdi rsi rcx
     rep movsb
     pop3        rdi rsi rcx
-#else
-    push3       edi esi ecx
-    push3       DST SRC SIZE
-    pop3        edi esi ecx
-    rep movsb
-    pop3        edi esi ecx
-#endif
     ret
 .endfunc
 
 asm_function aligned_block_copy_movsd
 0:
-#ifdef __amd64__
     push3       rdi rsi rcx
     push3       DST SRC SIZE
     pop3        rdi rsi rcx
     sar         rcx, 2
     rep movsd
     pop3        rdi rsi rcx
-#else
-    push3       edi esi ecx
-    push3       DST SRC SIZE
-    pop3        edi esi ecx
-    sar         ecx, 2
-    rep movsd
-    pop3        edi esi ecx
-#endif
     ret
 .endfunc
 
