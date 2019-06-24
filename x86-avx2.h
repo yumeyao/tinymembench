@@ -62,7 +62,7 @@ void aligned_block_fill_avx2(int64_t * __restrict dst,
                              int64_t * __restrict src,
                              int                  size);
 
-void aligned_block_fill_nt_sse2(int64_t * __restrict dst,
+void aligned_block_fill_nt_avx2(int64_t * __restrict dst,
                                 int64_t * __restrict src,
                                 int                  size);
 

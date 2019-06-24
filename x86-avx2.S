@@ -203,15 +203,15 @@ asm_function aligned_block_fill_avx2
     ret
 .endfunc
 
-asm_function aligned_block_fill_nt_sse2
-    movdqa      xmm0,       [SRC + 0]
+asm_function aligned_block_fill_nt_avx2
+    vmovdqa      ymm0,       [SRC + (0 * 32)]
 0:
-    movntdq     [DST + 0],  xmm0
-    movntdq     [DST + 16], xmm0
-    movntdq     [DST + 32], xmm0
-    movntdq     [DST + 48], xmm0
-    add         DST,        64
-    sub         SIZE,       64
+    vmovntdq     [DST + (0 * 32)], ymm0
+    vmovntdq     [DST + (1 * 32)], ymm0
+    vmovntdq     [DST + (2 * 32)], ymm0
+    vmovntdq     [DST + (3 * 32)], ymm0
+    add         DST,        (4 * 32)
+    sub         SIZE,       (4 * 32)
     jg          0b
     ret
 .endfunc
