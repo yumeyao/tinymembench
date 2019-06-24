@@ -99,19 +99,19 @@ asm_function aligned_block_copy_avx2
     ret
 .endfunc
 
-asm_function aligned_block_copy_nt_sse2
+asm_function aligned_block_copy_nt_avx2
 0:
-    movdqa      xmm0,       [SRC + 0]
-    movdqa      xmm1,       [SRC + 16]
-    movdqa      xmm2,       [SRC + 32]
-    movdqa      xmm3,       [SRC + 48]
-    movntdq     [DST + 0],  xmm0
-    movntdq     [DST + 16], xmm1
-    movntdq     [DST + 32], xmm2
-    movntdq     [DST + 48], xmm3
-    add         SRC,        64
-    add         DST,        64
-    sub         SIZE, 64
+    vmovdqa      ymm0,       [SRC + (0 * 32)]
+    vmovdqa      ymm1,       [SRC + (1 * 32)]
+    vmovdqa      ymm2,       [SRC + (2 * 32)]
+    vmovdqa      ymm3,       [SRC + (3 * 32)]
+    vmovntdq     [DST + (0 * 32)], ymm0
+    vmovntdq     [DST + (1 * 32)], ymm1
+    vmovntdq     [DST + (2 * 32)], ymm2
+    vmovntdq     [DST + (3 * 32)], ymm3
+    add         SRC,        (4 * 32)
+    add         DST,        (4 * 32)
+    sub         SIZE, (4 * 32)
     jg          0b
     ret
 .endfunc
