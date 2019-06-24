@@ -116,21 +116,21 @@ asm_function aligned_block_copy_nt_avx2
     ret
 .endfunc
 
-asm_function aligned_block_copy_pf32_sse2
+asm_function aligned_block_copy_pf32_avx2
 0:
     prefetchnta [SRC + PREFETCH_DISTANCE]
     prefetchnta [SRC + PREFETCH_DISTANCE + 32]
-    movdqa      xmm0,       [SRC + 0]
-    movdqa      xmm1,       [SRC + 16]
-    movdqa      xmm2,       [SRC + 32]
-    movdqa      xmm3,       [SRC + 48]
-    movdqa      [DST + 0],  xmm0
-    movdqa      [DST + 16], xmm1
-    movdqa      [DST + 32], xmm2
-    movdqa      [DST + 48], xmm3
-    add         SRC,        64
-    add         DST,        64
-    sub         SIZE,       64
+    vmovdqa      ymm0,       [SRC + (0 * 32)]
+    vmovdqa      ymm1,       [SRC + (1 * 32)]
+    vmovdqa      ymm2,       [SRC + (2 * 32)]
+    vmovdqa      ymm3,       [SRC + (3 * 32)]
+    vmovdqa      [DST + (0 * 32)], ymm0
+    vmovdqa      [DST + (1 * 32)], ymm1
+    vmovdqa      [DST + (2 * 32)], ymm2
+    vmovdqa      [DST + (3 * 32)], ymm3
+    add         SRC,        (4 * 32)
+    add         DST,        (4 * 32)
+    sub         SIZE,       (4 * 32)
     jg          0b
     ret
 .endfunc

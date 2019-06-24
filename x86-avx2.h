@@ -44,7 +44,7 @@ void aligned_block_copy_nt_avx2(int64_t * __restrict dst,
                                 int64_t * __restrict src,
                                 int                  size);
 
-void aligned_block_copy_pf32_sse2(int64_t * __restrict dst,
+void aligned_block_copy_pf32_avx2(int64_t * __restrict dst,
                                   int64_t * __restrict src,
                                   int                  size);
 void aligned_block_copy_pf64_sse2(int64_t * __restrict dst,
