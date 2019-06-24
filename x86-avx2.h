@@ -21,8 +21,8 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __X86_SSE2_H__
-#define __X86_SSE2_H__
+#ifndef __X86_AVX2_H__
+#define __X86_AVX2_H__
 
 #include <stdint.h>
 
