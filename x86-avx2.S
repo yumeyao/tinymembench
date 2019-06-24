@@ -61,27 +61,6 @@ asm_function_helper \function_name
 
 /*****************************************************************************/
 
-asm_function aligned_block_copy_movsb
-0:
-    push3       rdi rsi rcx
-    push3       DST SRC SIZE
-    pop3        rdi rsi rcx
-    rep movsb
-    pop3        rdi rsi rcx
-    ret
-.endfunc
-
-asm_function aligned_block_copy_movsd
-0:
-    push3       rdi rsi rcx
-    push3       DST SRC SIZE
-    pop3        rdi rsi rcx
-    sar         rcx, 2
-    rep movsd
-    pop3        rdi rsi rcx
-    ret
-.endfunc
-
 asm_function aligned_block_copy_avx2
 0:
     vmovdqa      ymm0,       [SRC + (0 * 32)]

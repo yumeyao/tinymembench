@@ -30,13 +30,6 @@
 extern "C" {
 #endif
 
-void aligned_block_copy_movsb(int64_t * __restrict dst,
-                              int64_t * __restrict src,
-                              int                  size);
-void aligned_block_copy_movsd(int64_t * __restrict dst,
-                              int64_t * __restrict src,
-                              int                  size);
-
 void aligned_block_copy_avx2(int64_t * __restrict dst,
                              int64_t * __restrict src,
                              int                  size);
