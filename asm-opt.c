@@ -226,10 +226,9 @@ bench_info *get_asm_benchmarks(void)
     if (check_avx2_support()) {
         /* AVX2 should run AVX2 and SSE2 benchmakrs */
         int len_avx2 = sizeof(x86_avx2)/sizeof(bench_info);
-        int len_sse2 = sizeof(x86_sse2)/sizeof(bench_info);
-        bench_info *x86_all = malloc((len_avx2+len_sse2)*sizeof(bench_info));
-        memcpy(x86_all, x86_avx2, len_avx2*sizeof(bench_info));
-        memcpy(x86_all+len_avx2, x86_sse2, len_sse2*sizeof(bench_info));
+        bench_info *x86_all = malloc(sizeof(x86_avx2)+sizeof(x86_sse2));
+        memcpy(x86_all, x86_avx2, sizeof(x86_avx2));
+        memcpy(x86_all+len_avx2, x86_sse2, sizeof(x86_sse2));
         return x86_all;
     } else if (check_sse2_support()) {
         return x86_sse2;
