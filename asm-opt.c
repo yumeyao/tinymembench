@@ -201,8 +201,7 @@ static bench_info x86_avx2[] =
     { "AVX2 2-pass copy prefetched (64 bytes step)", 1, aligned_block_copy_pf64_avx2 },
     { "AVX2 2-pass nontemporal copy", 1, aligned_block_copy_nt_avx2 },
     { "AVX2 fill", 0, aligned_block_fill_avx2 },
-    { "AVX2 nontemporal fill", 0, aligned_block_fill_nt_avx2 },
-    { NULL, 0, NULL }
+    { "AVX2 nontemporal fill", 0, aligned_block_fill_nt_avx2 }
 };
 
 static bench_info x86_avx2_fb[] =
@@ -224,13 +223,19 @@ static int check_avx2_support(void)
 
 bench_info *get_asm_benchmarks(void)
 {
-    /* FIXME - AVX2 should include SSE2 benchmarks */
-    if (check_avx2_support())
-        return x86_avx2;
-    else if (check_sse2_support())
+    if (check_avx2_support()) {
+        /* AVX2 should run AVX2 and SSE2 benchmakrs */
+        int len_avx2 = sizeof(x86_avx2)/sizeof(bench_info);
+        int len_sse2 = sizeof(x86_sse2)/sizeof(bench_info);
+        bench_info *x86_all = malloc((len_avx2+len_sse2)*sizeof(bench_info));
+        memcpy(x86_all, x86_avx2, len_avx2*sizeof(bench_info));
+        memcpy(x86_all+len_avx2, x86_sse2, len_sse2*sizeof(bench_info));
+        return x86_all;
+    } else if (check_sse2_support()) {
         return x86_sse2;
-    else
+    } else {
         return empty;
+    }
 }
 
 bench_info *get_asm_framebuffer_benchmarks(void)
