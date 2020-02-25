@@ -4,7 +4,7 @@ ifdef WINDIR
 	CC = gcc
 endif
 
-tinymembench: main.c util.o util.h asm-opt.h version.h asm-opt.o x86-sse2.o x86-avx2.o arm-neon.o mips-32.o aarch64-asm.o
+tinymembench: main.c util.o util.h asm-opt.h version.h asm-opt.o x86-sse2.o x86-avx2.o x86-avx512.o arm-neon.o mips-32.o aarch64-asm.o
 	${CC} -O2 ${CFLAGS} -o tinymembench main.c util.o asm-opt.o x86-sse2.o x86-avx2.o arm-neon.o mips-32.o aarch64-asm.o -lm
 
 util.o: util.c util.h
@@ -18,6 +18,9 @@ x86-sse2.o: x86-sse2.S
 
 x86-avx2.o: x86-avx2.S
 	${CC} -O2 ${CFLAGS} -c x86-avx2.S
+
+x86-avx512.o: x86-avx512.S
+	${CC} -O2 ${CFLAGS} -c x86-avx512.S
 
 arm-neon.o: arm-neon.S
 	${CC} -O2 ${CFLAGS} -c arm-neon.S
