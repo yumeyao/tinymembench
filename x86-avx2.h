@@ -1,5 +1,6 @@
 /*
- * Copyright © 2011 Siarhei Siamashka <siarhei.siamashka@gmail.com>
+ * Copyright © 2020 Joel Luth <joelluth@gmail.com>
+ * Based on code by Siarhei Siamashka <siarhei.siamashka@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
