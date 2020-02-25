@@ -35,5 +35,7 @@ typedef struct
 
 bench_info *get_asm_benchmarks(void);
 bench_info *get_asm_framebuffer_benchmarks(void);
+bench_info *get_avx2_benchmarks(void);
+bench_info *get_avx2_framebuffer_benchmarks(void);
 
 #endif
