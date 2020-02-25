@@ -568,6 +568,11 @@ int main(int argc, char *argv[])
         printf(" ---\n");
         bandwidth_bench(dstbuf, srcbuf, tmpbuf, bufsize, blocksize, " ", bi_avx2);
     }
+    bench_info *bi_avx512 = get_avx512_benchmarks();
+    if (bi_avx512->f) {
+        printf(" ---\n");
+        bandwidth_bench(dstbuf, srcbuf, tmpbuf, bufsize, blocksize, " ", bi_avx512);
+    }
 
 #ifdef __linux__
     bi = get_asm_framebuffer_benchmarks();
@@ -599,7 +604,7 @@ int main(int argc, char *argv[])
             bufsize = fbsize;
         bandwidth_bench(dstbuf, srcbuf, tmpbuf, bufsize, blocksize, " ", bi);
     }
-    /* TODO: add get_avx2_framebuffer_benchmarks */
+    /* TODO: add get_avx2_framebuffer_benchmarks and get_avx512_framebuffer_benchmarks */
 #endif
 
     free(poolbuf);
