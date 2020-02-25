@@ -28,6 +28,7 @@
 .text
 
 #define PREFETCH_DISTANCE 256
+#define REGSZ 32
 
 .macro asm_function_helper function_name
     .global \function_name
@@ -64,34 +65,34 @@ asm_function_helper \function_name
 
 asm_function aligned_block_copy_avx2
 0:
-    vmovdqa      ymm0,       [SRC + (0 * 32)]
-    vmovdqa      ymm1,       [SRC + (1 * 32)]
-    vmovdqa      ymm2,       [SRC + (2 * 32)]
-    vmovdqa      ymm3,       [SRC + (3 * 32)]
-    vmovdqa      [DST + (0 * 32)], ymm0
-    vmovdqa      [DST + (1 * 32)], ymm1
-    vmovdqa      [DST + (2 * 32)], ymm2
-    vmovdqa      [DST + (3 * 32)], ymm3
-    add         SRC,        (4 * 32)
-    add         DST,        (4 * 32)
-    sub         SIZE, (4 * 32)
+    vmovdqa      ymm0,       [SRC + (0 * REGSZ)]
+    vmovdqa      ymm1,       [SRC + (1 * REGSZ)]
+    vmovdqa      ymm2,       [SRC + (2 * REGSZ)]
+    vmovdqa      ymm3,       [SRC + (3 * REGSZ)]
+    vmovdqa      [DST + (0 * REGSZ)], ymm0
+    vmovdqa      [DST + (1 * REGSZ)], ymm1
+    vmovdqa      [DST + (2 * REGSZ)], ymm2
+    vmovdqa      [DST + (3 * REGSZ)], ymm3
+    add         SRC,        (4 * REGSZ)
+    add         DST,        (4 * REGSZ)
+    sub         SIZE, (4 * REGSZ)
     jg          0b
     ret
 .endfunc
 
 asm_function aligned_block_copy_nt_avx2
 0:
-    vmovdqa      ymm0,       [SRC + (0 * 32)]
-    vmovdqa      ymm1,       [SRC + (1 * 32)]
-    vmovdqa      ymm2,       [SRC + (2 * 32)]
-    vmovdqa      ymm3,       [SRC + (3 * 32)]
-    vmovntdq     [DST + (0 * 32)], ymm0
-    vmovntdq     [DST + (1 * 32)], ymm1
-    vmovntdq     [DST + (2 * 32)], ymm2
-    vmovntdq     [DST + (3 * 32)], ymm3
-    add         SRC,        (4 * 32)
-    add         DST,        (4 * 32)
-    sub         SIZE, (4 * 32)
+    vmovdqa      ymm0,       [SRC + (0 * REGSZ)]
+    vmovdqa      ymm1,       [SRC + (1 * REGSZ)]
+    vmovdqa      ymm2,       [SRC + (2 * REGSZ)]
+    vmovdqa      ymm3,       [SRC + (3 * REGSZ)]
+    vmovntdq     [DST + (0 * REGSZ)], ymm0
+    vmovntdq     [DST + (1 * REGSZ)], ymm1
+    vmovntdq     [DST + (2 * REGSZ)], ymm2
+    vmovntdq     [DST + (3 * REGSZ)], ymm3
+    add         SRC,        (4 * REGSZ)
+    add         DST,        (4 * REGSZ)
+    sub         SIZE, (4 * REGSZ)
     jg          0b
     ret
 .endfunc
@@ -99,18 +100,18 @@ asm_function aligned_block_copy_nt_avx2
 asm_function aligned_block_copy_pf32_avx2
 0:
     prefetchnta [SRC + PREFETCH_DISTANCE]
-    prefetchnta [SRC + PREFETCH_DISTANCE + 32]
-    vmovdqa      ymm0,       [SRC + (0 * 32)]
-    vmovdqa      ymm1,       [SRC + (1 * 32)]
-    vmovdqa      ymm2,       [SRC + (2 * 32)]
-    vmovdqa      ymm3,       [SRC + (3 * 32)]
-    vmovdqa      [DST + (0 * 32)], ymm0
-    vmovdqa      [DST + (1 * 32)], ymm1
-    vmovdqa      [DST + (2 * 32)], ymm2
-    vmovdqa      [DST + (3 * 32)], ymm3
-    add         SRC,        (4 * 32)
-    add         DST,        (4 * 32)
-    sub         SIZE,       (4 * 32)
+    prefetchnta [SRC + PREFETCH_DISTANCE + REGSZ]
+    vmovdqa      ymm0,       [SRC + (0 * REGSZ)]
+    vmovdqa      ymm1,       [SRC + (1 * REGSZ)]
+    vmovdqa      ymm2,       [SRC + (2 * REGSZ)]
+    vmovdqa      ymm3,       [SRC + (3 * REGSZ)]
+    vmovdqa      [DST + (0 * REGSZ)], ymm0
+    vmovdqa      [DST + (1 * REGSZ)], ymm1
+    vmovdqa      [DST + (2 * REGSZ)], ymm2
+    vmovdqa      [DST + (3 * REGSZ)], ymm3
+    add         SRC,        (4 * REGSZ)
+    add         DST,        (4 * REGSZ)
+    sub         SIZE,       (4 * REGSZ)
     jg          0b
     ret
 .endfunc
@@ -118,18 +119,18 @@ asm_function aligned_block_copy_pf32_avx2
 asm_function aligned_block_copy_nt_pf32_avx2
 0:
     prefetchnta [SRC + PREFETCH_DISTANCE]
-    prefetchnta [SRC + PREFETCH_DISTANCE + 32]
-    vmovdqa      ymm0,       [SRC + (0 * 32)]
-    vmovdqa      ymm1,       [SRC + (1 * 32)]
-    vmovdqa      ymm2,       [SRC + (2 * 32)]
-    vmovdqa      ymm3,       [SRC + (3 * 32)]
-    vmovntdq     [DST + (0 * 32)], ymm0
-    vmovntdq     [DST + (1 * 32)], ymm1
-    vmovntdq     [DST + (2 * 32)], ymm2
-    vmovntdq     [DST + (3 * 32)], ymm3
-    add         SRC,        (4 * 32)
-    add         DST,        (4 * 32)
-    sub         SIZE,       (4 * 32)
+    prefetchnta [SRC + PREFETCH_DISTANCE + REGSZ]
+    vmovdqa      ymm0,       [SRC + (0 * REGSZ)]
+    vmovdqa      ymm1,       [SRC + (1 * REGSZ)]
+    vmovdqa      ymm2,       [SRC + (2 * REGSZ)]
+    vmovdqa      ymm3,       [SRC + (3 * REGSZ)]
+    vmovntdq     [DST + (0 * REGSZ)], ymm0
+    vmovntdq     [DST + (1 * REGSZ)], ymm1
+    vmovntdq     [DST + (2 * REGSZ)], ymm2
+    vmovntdq     [DST + (3 * REGSZ)], ymm3
+    add         SRC,        (4 * REGSZ)
+    add         DST,        (4 * REGSZ)
+    sub         SIZE,       (4 * REGSZ)
     jg          0b
     ret
 .endfunc
@@ -137,17 +138,17 @@ asm_function aligned_block_copy_nt_pf32_avx2
 asm_function aligned_block_copy_pf64_avx2
 0:
     prefetchnta [SRC + PREFETCH_DISTANCE]
-    vmovdqa      ymm0,       [SRC + (0 * 32)]
-    vmovdqa      ymm1,       [SRC + (1 * 32)]
-    vmovdqa      ymm2,       [SRC + (2 * 32)]
-    vmovdqa      ymm3,       [SRC + (3 * 32)]
-    vmovdqa      [DST + (0 * 32)], ymm0
-    vmovdqa      [DST + (1 * 32)], ymm1
-    vmovdqa      [DST + (2 * 32)], ymm2
-    vmovdqa      [DST + (3 * 32)], ymm3
-    add         SRC,        (4 * 32)
-    add         DST,        (4 * 32)
-    sub         SIZE,       (4 * 32)
+    vmovdqa      ymm0,       [SRC + (0 * REGSZ)]
+    vmovdqa      ymm1,       [SRC + (1 * REGSZ)]
+    vmovdqa      ymm2,       [SRC + (2 * REGSZ)]
+    vmovdqa      ymm3,       [SRC + (3 * REGSZ)]
+    vmovdqa      [DST + (0 * REGSZ)], ymm0
+    vmovdqa      [DST + (1 * REGSZ)], ymm1
+    vmovdqa      [DST + (2 * REGSZ)], ymm2
+    vmovdqa      [DST + (3 * REGSZ)], ymm3
+    add         SRC,        (4 * REGSZ)
+    add         DST,        (4 * REGSZ)
+    sub         SIZE,       (4 * REGSZ)
     jg          0b
     ret
 .endfunc
@@ -155,43 +156,43 @@ asm_function aligned_block_copy_pf64_avx2
 asm_function aligned_block_copy_nt_pf64_avx2
 0:
     prefetchnta [SRC + PREFETCH_DISTANCE]
-    vmovdqa      ymm0,       [SRC + (0 * 32)]
-    vmovdqa      ymm1,       [SRC + (1 * 32)]
-    vmovdqa      ymm2,       [SRC + (2 * 32)]
-    vmovdqa      ymm3,       [SRC + (3 * 32)]
-    vmovntdq     [DST + (0 * 32)], ymm0
-    vmovntdq     [DST + (1 * 32)], ymm1
-    vmovntdq     [DST + (2 * 32)], ymm2
-    vmovntdq     [DST + (3 * 32)], ymm3
-    add         SRC,        (4 * 32)
-    add         DST,        (4 * 32)
-    sub         SIZE,       (4 * 32)
+    vmovdqa      ymm0,       [SRC + (0 * REGSZ)]
+    vmovdqa      ymm1,       [SRC + (1 * REGSZ)]
+    vmovdqa      ymm2,       [SRC + (2 * REGSZ)]
+    vmovdqa      ymm3,       [SRC + (3 * REGSZ)]
+    vmovntdq     [DST + (0 * REGSZ)], ymm0
+    vmovntdq     [DST + (1 * REGSZ)], ymm1
+    vmovntdq     [DST + (2 * REGSZ)], ymm2
+    vmovntdq     [DST + (3 * REGSZ)], ymm3
+    add         SRC,        (4 * REGSZ)
+    add         DST,        (4 * REGSZ)
+    sub         SIZE,       (4 * REGSZ)
     jg          0b
     ret
 .endfunc
 
 asm_function aligned_block_fill_avx2
-    vmovdqa      ymm0,       [SRC + (0 * 32)]
+    vmovdqa      ymm0,       [SRC + (0 * REGSZ)]
 0:
-    vmovdqa      [DST + (0 * 32)], ymm0
-    vmovdqa      [DST + (1 * 32)], ymm0
-    vmovdqa      [DST + (2 * 32)], ymm0
-    vmovdqa      [DST + (3 * 32)], ymm0
-    add         DST,        (4 * 32)
-    sub         SIZE,       (4 * 32)
+    vmovdqa      [DST + (0 * REGSZ)], ymm0
+    vmovdqa      [DST + (1 * REGSZ)], ymm0
+    vmovdqa      [DST + (2 * REGSZ)], ymm0
+    vmovdqa      [DST + (3 * REGSZ)], ymm0
+    add         DST,        (4 * REGSZ)
+    sub         SIZE,       (4 * REGSZ)
     jg          0b
     ret
 .endfunc
 
 asm_function aligned_block_fill_nt_avx2
-    vmovdqa      ymm0,       [SRC + (0 * 32)]
+    vmovdqa      ymm0,       [SRC + (0 * REGSZ)]
 0:
-    vmovntdq     [DST + (0 * 32)], ymm0
-    vmovntdq     [DST + (1 * 32)], ymm0
-    vmovntdq     [DST + (2 * 32)], ymm0
-    vmovntdq     [DST + (3 * 32)], ymm0
-    add         DST,        (4 * 32)
-    sub         SIZE,       (4 * 32)
+    vmovntdq     [DST + (0 * REGSZ)], ymm0
+    vmovntdq     [DST + (1 * REGSZ)], ymm0
+    vmovntdq     [DST + (2 * REGSZ)], ymm0
+    vmovntdq     [DST + (3 * REGSZ)], ymm0
+    add         DST,        (4 * REGSZ)
+    sub         SIZE,       (4 * REGSZ)
     jg          0b
     ret
 .endfunc
