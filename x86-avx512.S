@@ -65,14 +65,14 @@ asm_function_helper \function_name
 
 asm_function aligned_block_copy_avx512
 0:
-    vmovdqa      zmm0,       [SRC + (0 * REGSZ)]
-    vmovdqa      zmm1,       [SRC + (1 * REGSZ)]
-    vmovdqa      zmm2,       [SRC + (2 * REGSZ)]
-    vmovdqa      zmm3,       [SRC + (3 * REGSZ)]
-    vmovdqa      [DST + (0 * REGSZ)], zmm0
-    vmovdqa      [DST + (1 * REGSZ)], zmm1
-    vmovdqa      [DST + (2 * REGSZ)], zmm2
-    vmovdqa      [DST + (3 * REGSZ)], zmm3
+    vmovdqa64      zmm0,       [SRC + (0 * REGSZ)]
+    vmovdqa64      zmm1,       [SRC + (1 * REGSZ)]
+    vmovdqa64      zmm2,       [SRC + (2 * REGSZ)]
+    vmovdqa64      zmm3,       [SRC + (3 * REGSZ)]
+    vmovdqa64      [DST + (0 * REGSZ)], zmm0
+    vmovdqa64      [DST + (1 * REGSZ)], zmm1
+    vmovdqa64      [DST + (2 * REGSZ)], zmm2
+    vmovdqa64      [DST + (3 * REGSZ)], zmm3
     add         SRC,        (4 * REGSZ)
     add         DST,        (4 * REGSZ)
     sub         SIZE, (4 * REGSZ)
@@ -82,10 +82,10 @@ asm_function aligned_block_copy_avx512
 
 asm_function aligned_block_copy_nt_avx512
 0:
-    vmovdqa      zmm0,       [SRC + (0 * REGSZ)]
-    vmovdqa      zmm1,       [SRC + (1 * REGSZ)]
-    vmovdqa      zmm2,       [SRC + (2 * REGSZ)]
-    vmovdqa      zmm3,       [SRC + (3 * REGSZ)]
+    vmovdqa64      zmm0,       [SRC + (0 * REGSZ)]
+    vmovdqa64      zmm1,       [SRC + (1 * REGSZ)]
+    vmovdqa64      zmm2,       [SRC + (2 * REGSZ)]
+    vmovdqa64      zmm3,       [SRC + (3 * REGSZ)]
     vmovntdq     [DST + (0 * REGSZ)], zmm0
     vmovntdq     [DST + (1 * REGSZ)], zmm1
     vmovntdq     [DST + (2 * REGSZ)], zmm2
@@ -101,14 +101,14 @@ asm_function aligned_block_copy_pf32_avx512
 0:
     prefetchnta [SRC + PREFETCH_DISTANCE]
     prefetchnta [SRC + PREFETCH_DISTANCE + REGSZ]
-    vmovdqa      zmm0,       [SRC + (0 * REGSZ)]
-    vmovdqa      zmm1,       [SRC + (1 * REGSZ)]
-    vmovdqa      zmm2,       [SRC + (2 * REGSZ)]
-    vmovdqa      zmm3,       [SRC + (3 * REGSZ)]
-    vmovdqa      [DST + (0 * REGSZ)], zmm0
-    vmovdqa      [DST + (1 * REGSZ)], zmm1
-    vmovdqa      [DST + (2 * REGSZ)], zmm2
-    vmovdqa      [DST + (3 * REGSZ)], zmm3
+    vmovdqa64      zmm0,       [SRC + (0 * REGSZ)]
+    vmovdqa64      zmm1,       [SRC + (1 * REGSZ)]
+    vmovdqa64      zmm2,       [SRC + (2 * REGSZ)]
+    vmovdqa64      zmm3,       [SRC + (3 * REGSZ)]
+    vmovdqa64      [DST + (0 * REGSZ)], zmm0
+    vmovdqa64      [DST + (1 * REGSZ)], zmm1
+    vmovdqa64      [DST + (2 * REGSZ)], zmm2
+    vmovdqa64      [DST + (3 * REGSZ)], zmm3
     add         SRC,        (4 * REGSZ)
     add         DST,        (4 * REGSZ)
     sub         SIZE,       (4 * REGSZ)
@@ -120,10 +120,10 @@ asm_function aligned_block_copy_nt_pf32_avx512
 0:
     prefetchnta [SRC + PREFETCH_DISTANCE]
     prefetchnta [SRC + PREFETCH_DISTANCE + REGSZ]
-    vmovdqa      zmm0,       [SRC + (0 * REGSZ)]
-    vmovdqa      zmm1,       [SRC + (1 * REGSZ)]
-    vmovdqa      zmm2,       [SRC + (2 * REGSZ)]
-    vmovdqa      zmm3,       [SRC + (3 * REGSZ)]
+    vmovdqa64      zmm0,       [SRC + (0 * REGSZ)]
+    vmovdqa64      zmm1,       [SRC + (1 * REGSZ)]
+    vmovdqa64      zmm2,       [SRC + (2 * REGSZ)]
+    vmovdqa64      zmm3,       [SRC + (3 * REGSZ)]
     vmovntdq     [DST + (0 * REGSZ)], zmm0
     vmovntdq     [DST + (1 * REGSZ)], zmm1
     vmovntdq     [DST + (2 * REGSZ)], zmm2
@@ -138,14 +138,14 @@ asm_function aligned_block_copy_nt_pf32_avx512
 asm_function aligned_block_copy_pf64_avx512
 0:
     prefetchnta [SRC + PREFETCH_DISTANCE]
-    vmovdqa      zmm0,       [SRC + (0 * REGSZ)]
-    vmovdqa      zmm1,       [SRC + (1 * REGSZ)]
-    vmovdqa      zmm2,       [SRC + (2 * REGSZ)]
-    vmovdqa      zmm3,       [SRC + (3 * REGSZ)]
-    vmovdqa      [DST + (0 * REGSZ)], zmm0
-    vmovdqa      [DST + (1 * REGSZ)], zmm1
-    vmovdqa      [DST + (2 * REGSZ)], zmm2
-    vmovdqa      [DST + (3 * REGSZ)], zmm3
+    vmovdqa64      zmm0,       [SRC + (0 * REGSZ)]
+    vmovdqa64      zmm1,       [SRC + (1 * REGSZ)]
+    vmovdqa64      zmm2,       [SRC + (2 * REGSZ)]
+    vmovdqa64      zmm3,       [SRC + (3 * REGSZ)]
+    vmovdqa64      [DST + (0 * REGSZ)], zmm0
+    vmovdqa64      [DST + (1 * REGSZ)], zmm1
+    vmovdqa64      [DST + (2 * REGSZ)], zmm2
+    vmovdqa64      [DST + (3 * REGSZ)], zmm3
     add         SRC,        (4 * REGSZ)
     add         DST,        (4 * REGSZ)
     sub         SIZE,       (4 * REGSZ)
@@ -156,10 +156,10 @@ asm_function aligned_block_copy_pf64_avx512
 asm_function aligned_block_copy_nt_pf64_avx512
 0:
     prefetchnta [SRC + PREFETCH_DISTANCE]
-    vmovdqa      zmm0,       [SRC + (0 * REGSZ)]
-    vmovdqa      zmm1,       [SRC + (1 * REGSZ)]
-    vmovdqa      zmm2,       [SRC + (2 * REGSZ)]
-    vmovdqa      zmm3,       [SRC + (3 * REGSZ)]
+    vmovdqa64      zmm0,       [SRC + (0 * REGSZ)]
+    vmovdqa64      zmm1,       [SRC + (1 * REGSZ)]
+    vmovdqa64      zmm2,       [SRC + (2 * REGSZ)]
+    vmovdqa64      zmm3,       [SRC + (3 * REGSZ)]
     vmovntdq     [DST + (0 * REGSZ)], zmm0
     vmovntdq     [DST + (1 * REGSZ)], zmm1
     vmovntdq     [DST + (2 * REGSZ)], zmm2
@@ -172,12 +172,12 @@ asm_function aligned_block_copy_nt_pf64_avx512
 .endfunc
 
 asm_function aligned_block_fill_avx512
-    vmovdqa      zmm0,       [SRC + (0 * REGSZ)]
+    vmovdqa64      zmm0,       [SRC + (0 * REGSZ)]
 0:
-    vmovdqa      [DST + (0 * REGSZ)], zmm0
-    vmovdqa      [DST + (1 * REGSZ)], zmm0
-    vmovdqa      [DST + (2 * REGSZ)], zmm0
-    vmovdqa      [DST + (3 * REGSZ)], zmm0
+    vmovdqa64      [DST + (0 * REGSZ)], zmm0
+    vmovdqa64      [DST + (1 * REGSZ)], zmm0
+    vmovdqa64      [DST + (2 * REGSZ)], zmm0
+    vmovdqa64      [DST + (3 * REGSZ)], zmm0
     add         DST,        (4 * REGSZ)
     sub         SIZE,       (4 * REGSZ)
     jg          0b
@@ -185,7 +185,7 @@ asm_function aligned_block_fill_avx512
 .endfunc
 
 asm_function aligned_block_fill_nt_avx512
-    vmovdqa      zmm0,       [SRC + (0 * REGSZ)]
+    vmovdqa64      zmm0,       [SRC + (0 * REGSZ)]
 0:
     vmovntdq     [DST + (0 * REGSZ)], zmm0
     vmovntdq     [DST + (1 * REGSZ)], zmm0
