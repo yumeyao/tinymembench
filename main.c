@@ -21,6 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include <getopt.h>
 #include <string.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -493,35 +494,62 @@ usage()
 	fprintf(stderr, "\t-s Memory buffer size in Bytes <%d>\n", SIZE);
 	fprintf(stderr, "\t-l Latency test maximum buffer size in Bytes <%d>\n", SIZE * 2);
 	fprintf(stderr, "\t-c Latency count <%d>\n", LATBENCH_COUNT);
+    fprintf(stderr, "\t--run_sse Include SSE2 tests <false>\n");
+    fprintf(stderr, "\t--run_sse Include AVX2 tests <false>\n");
+    fprintf(stderr, "\t--run_sse Include AVX512 tests <false>\n");
 	exit(EXIT_FAILURE);
 }
 
+
 int main(int argc, char *argv[])
 {
-	int ch;
-	int latbench_size = SIZE * 2, latbench_count = LATBENCH_COUNT;
+	int c, latbench_size = SIZE * 2, latbench_count = LATBENCH_COUNT;
 	size_t bufsize = SIZE;
 	int blocksize = BLOCKSIZE;
+    static int run_sse2 = 0;
+    static int run_avx2 = 0;
+    static int run_avx512 = 0;
 	
 	progname = argv[0];
-	while ((ch = getopt(argc, argv, "hb:c:l:s:")) != -1) {
-		switch (ch) {
-		case 'b':
-		    blocksize = atoi(optarg);
-			break;
-		case 'c':
-		    latbench_count = atoi(optarg);
-			break;
-		case 'l':
-		    latbench_size = atoi(optarg);
-			break;
-		case 's':
-		    bufsize = atoi(optarg);
-			break;
-		case 'h':
-		    usage();
-		}
-	}
+    while (1) {
+        static struct option long_options[] = {
+            {"run_sse2", no_argument, &run_sse2, 1},
+            {"run_avx2", no_argument, &run_avx2, 1},
+            {"run_avx512", no_argument, &run_avx512, 1},
+            {0, 0, 0, 0}
+        };
+        /* getopt_long stores the option index here. */
+        int option_index = 0;
+        c = getopt_long(argc, argv, "hb:c:l:s:", long_options, &option_index);
+        if (c == -1)
+            break;
+		switch (c) {
+            case 0:
+                if (long_options[option_index].flag != 0)
+                    break;
+                printf ("option %s", long_options[option_index].name);
+                if (optarg)
+                    printf (" with arg %s", optarg);
+                printf ("\n");
+                break;
+		    case 'b':
+		        blocksize = atoi(optarg);
+			    break;
+		    case 'c':
+		        latbench_count = atoi(optarg);
+			    break;
+		    case 'l':
+		        latbench_size = atoi(optarg);
+			    break;
+		    case 's':
+		        bufsize = atoi(optarg);
+			    break;
+		    case 'h':
+		        usage();
+            default:
+                abort();
+	    }
+    }
 
     int64_t *srcbuf, *dstbuf, *tmpbuf;
     void *poolbuf;
@@ -558,14 +586,30 @@ int main(int argc, char *argv[])
     bandwidth_bench(dstbuf, srcbuf, tmpbuf, bufsize, blocksize, " ", c_benchmarks);
     printf(" ---\n");
     bandwidth_bench(dstbuf, srcbuf, tmpbuf, bufsize, blocksize, " ", libc_benchmarks);
-    bench_info *bi = get_asm_benchmarks();
-    if (bi->f) {
-        printf(" ---\n");
-        bandwidth_bench(dstbuf, srcbuf, tmpbuf, bufsize, blocksize, " ", bi);
+    if (run_sse2) {
+        bench_info *bi = get_asm_benchmarks();
+        if (bi->f) {
+            printf(" ---\n");
+            bandwidth_bench(dstbuf, srcbuf, tmpbuf, bufsize, blocksize, " ", bi);
+        }
+    }
+    if (run_avx2) {
+        bench_info *bi_avx2 = get_avx2_benchmarks();
+        if (bi_avx2->f) {
+            printf(" ---\n");
+            bandwidth_bench(dstbuf, srcbuf, tmpbuf, bufsize, blocksize, " ", bi_avx2);
+        }
+    }
+    if (run_avx512) {
+        bench_info *bi_avx512 = get_avx512_benchmarks();
+        if (bi_avx512->f) {
+            printf(" ---\n");
+            bandwidth_bench(dstbuf, srcbuf, tmpbuf, bufsize, blocksize, " ", bi_avx512);
+        }
     }
 
 #ifdef __linux__
-    bi = get_asm_framebuffer_benchmarks();
+    bench_info *bi = get_asm_framebuffer_benchmarks();
     if (bi->f && fbbuf)
     {
         printf("\n");
@@ -594,6 +638,7 @@ int main(int argc, char *argv[])
             bufsize = fbsize;
         bandwidth_bench(dstbuf, srcbuf, tmpbuf, bufsize, blocksize, " ", bi);
     }
+    /* TODO: add get_avx2_framebuffer_benchmarks and get_avx512_framebuffer_benchmarks */
 #endif
 
     free(poolbuf);
