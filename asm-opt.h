@@ -30,7 +30,7 @@ typedef struct
 {
     const char *description;
     int use_tmpbuf;
-    void (*f)(int64_t *, int64_t *, int);
+    void (*f)(int64_t *, int64_t *, size_t);
 } bench_info;
 
 bench_info *get_asm_benchmarks(void);

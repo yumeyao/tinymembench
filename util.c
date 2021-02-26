@@ -28,13 +28,15 @@
 
 #include "util.h"
 
-void aligned_block_copy(int64_t * __restrict dst_,
-                        int64_t * __restrict src,
-                        int                  size)
+void aligned_block_copy(int64_t *__restrict dst_,
+                        int64_t *__restrict src,
+                        size_t size)
 {
     volatile int64_t *dst = dst_;
     int64_t t1, t2, t3, t4;
-    while ((size -= 64) >= 0)
+    ssize_t offset = (ssize_t)size;
+
+    while ((offset -= 64) >= 0)
     {
         t1 = *src++;
         t2 = *src++;
@@ -55,15 +57,17 @@ void aligned_block_copy(int64_t * __restrict dst_,
     }
 }
 
-void aligned_block_copy_backwards(int64_t * __restrict dst_,
-                                  int64_t * __restrict src,
-                                  int                  size)
+void aligned_block_copy_backwards(int64_t *__restrict dst_,
+                                  int64_t *__restrict src,
+                                  size_t size)
 {
     volatile int64_t *dst = dst_;
     int64_t t1, t2, t3, t4;
+    ssize_t offset = (ssize_t)size;
+
     src += size / 8 - 1;
     dst += size / 8 - 1;
-    while ((size -= 64) >= 0)
+    while ((offset -= 64) >= 0)
     {
         t1 = *src--;
         t2 = *src--;
@@ -88,15 +92,17 @@ void aligned_block_copy_backwards(int64_t * __restrict dst_,
  * Walk memory addresses in the backwards direction, but still
  * copy each individual 32 byte block in the forward direction.
  */
-void aligned_block_copy_backwards_bs32(int64_t * __restrict dst_,
-                                       int64_t * __restrict src,
-                                       int                  size)
+void aligned_block_copy_backwards_bs32(int64_t *__restrict dst_,
+                                       int64_t *__restrict src,
+                                       size_t size)
 {
     volatile int64_t *dst = dst_;
     int64_t t1, t2, t3, t4;
+    ssize_t offset = (ssize_t)size;
+
     src += size / 8 - 8;
     dst += size / 8 - 8;
-    while ((size -= 64) >= 0)
+    while ((offset -= 64) >= 0)
     {
         t1 = src[4];
         t2 = src[5];
@@ -123,15 +129,18 @@ void aligned_block_copy_backwards_bs32(int64_t * __restrict dst_,
  * Walk memory addresses in the backwards direction, but still
  * copy each individual 64 byte block in the forward direction.
  */
-void aligned_block_copy_backwards_bs64(int64_t * __restrict dst_,
-                                       int64_t * __restrict src,
-                                       int                  size)
+void aligned_block_copy_backwards_bs64(int64_t *__restrict dst_,
+                                       int64_t *__restrict src,
+                                       size_t size)
 {
     volatile int64_t *dst = dst_;
     int64_t t1, t2, t3, t4;
+    ssize_t offset = (ssize_t)size;
+
     src += size / 8 - 8;
     dst += size / 8 - 8;
-    while ((size -= 64) >= 0)
+
+    while ((offset -= 64) >= 0)
     {
         t1 = src[0];
         t2 = src[1];
@@ -154,13 +163,15 @@ void aligned_block_copy_backwards_bs64(int64_t * __restrict dst_,
     }
 }
 
-void aligned_block_copy_pf32(int64_t * __restrict dst_,
-                             int64_t * __restrict src,
-                             int                  size)
+void aligned_block_copy_pf32(int64_t *__restrict dst_,
+                             int64_t *__restrict src,
+                             size_t size)
 {
     volatile int64_t *dst = dst_;
     int64_t t1, t2, t3, t4;
-    while ((size -= 64) >= 0)
+    ssize_t offset = (ssize_t)size;
+
+    while ((offset -= 64) >= 0)
     {
         __builtin_prefetch(src + 32, 0, 0);
         t1 = *src++;
@@ -183,13 +194,15 @@ void aligned_block_copy_pf32(int64_t * __restrict dst_,
     }
 }
 
-void aligned_block_copy_pf64(int64_t * __restrict dst_,
-                             int64_t * __restrict src,
-                             int                  size)
+void aligned_block_copy_pf64(int64_t *__restrict dst_,
+                             int64_t *__restrict src,
+                             size_t size)
 {
     volatile int64_t *dst = dst_;
     int64_t t1, t2, t3, t4;
-    while ((size -= 64) >= 0)
+    ssize_t offset = (ssize_t)size;
+
+    while ((offset -= 64) >= 0)
     {
         __builtin_prefetch(src + 32, 0, 0);
         t1 = *src++;
@@ -211,12 +224,14 @@ void aligned_block_copy_pf64(int64_t * __restrict dst_,
     }
 }
 
-void aligned_block_fetch(int64_t * __restrict dst,
-                         int64_t * __restrict src_,
-                         int                  size)
+void aligned_block_fetch(int64_t *__restrict dst,
+                         int64_t *__restrict src_,
+                         size_t size)
 {
     volatile int64_t *src = src_;
-    while ((size -= 64) >= 0)
+    ssize_t offset = (ssize_t)size;
+
+    while ((offset -= 64) >= 0)
     {
         *src++;
         *src++;
@@ -229,13 +244,15 @@ void aligned_block_fetch(int64_t * __restrict dst,
     }
 }
 
-void aligned_block_fill(int64_t * __restrict dst_,
-                        int64_t * __restrict src,
-                        int                  size)
+void aligned_block_fill(int64_t *__restrict dst_,
+                        int64_t *__restrict src,
+                        size_t size)
 {
     volatile int64_t *dst = dst_;
     int64_t data = *src;
-    while ((size -= 64) >= 0)
+    ssize_t offset = (ssize_t)size;
+
+    while ((offset -= 64) >= 0)
     {
         *dst++ = data;
         *dst++ = data;
@@ -254,13 +271,15 @@ void aligned_block_fill(int64_t * __restrict dst_,
  *
  * See: https://github.com/ssvb/tinymembench/issues/7
  */
-void aligned_block_fill_shuffle16(int64_t * __restrict dst_,
-                                  int64_t * __restrict src,
-                                  int                  size)
+void aligned_block_fill_shuffle16(int64_t *__restrict dst_,
+                                  int64_t *__restrict src,
+                                  size_t size)
 {
     volatile int64_t *dst = dst_;
     int64_t data = *src;
-    while ((size -= 64) >= 0)
+    ssize_t offset = (ssize_t)size;
+
+    while ((offset -= 64) >= 0)
     {
         dst[0 + 0] = data;
         dst[1 + 0] = data;
@@ -274,13 +293,15 @@ void aligned_block_fill_shuffle16(int64_t * __restrict dst_,
     }
 }
 
-void aligned_block_fill_shuffle32(int64_t * __restrict dst_,
-                                  int64_t * __restrict src,
-                                  int                  size)
+void aligned_block_fill_shuffle32(int64_t *__restrict dst_,
+                                  int64_t *__restrict src,
+                                  size_t size)
 {
     volatile int64_t *dst = dst_;
     int64_t data = *src;
-    while ((size -= 64) >= 0)
+    ssize_t offset = (ssize_t)size;
+
+    while ((offset -= 64) >= 0)
     {
         dst[3 + 0] = data;
         dst[0 + 0] = data;
@@ -294,13 +315,15 @@ void aligned_block_fill_shuffle32(int64_t * __restrict dst_,
     }
 }
 
-void aligned_block_fill_shuffle64(int64_t * __restrict dst_,
-                                  int64_t * __restrict src,
-                                  int                  size)
+void aligned_block_fill_shuffle64(int64_t *__restrict dst_,
+                                  int64_t *__restrict src,
+                                  size_t size)
 {
     volatile int64_t *dst = dst_;
     int64_t data = *src;
-    while ((size -= 64) >= 0)
+    ssize_t offset = (ssize_t)size;
+
+    while ((offset -= 64) >= 0)
     {
         dst[5] = data;
         dst[2] = data;
@@ -317,7 +340,7 @@ void aligned_block_fill_shuffle64(int64_t * __restrict dst_,
 double gettime(void)
 {
     struct timeval tv;
-    gettimeofday (&tv, NULL);
+    gettimeofday(&tv, NULL);
     return (double)((int64_t)tv.tv_sec * 1000000 + tv.tv_usec) / 1000000.;
 }
 
@@ -326,18 +349,18 @@ double fmin(double a, double b)
     return a < b ? a : b;
 }
 
-#define ALIGN_PADDING    0x100000
-#define CACHE_LINE_SIZE  128
+#define ALIGN_PADDING 0x100000
+#define CACHE_LINE_SIZE 128
 
 static char *align_up(char *ptr, int align)
 {
     return (char *)(((uintptr_t)ptr + align - 1) & ~(uintptr_t)(align - 1));
 }
 
-void *alloc_four_nonaliased_buffers(void **buf1_, int size1,
-                                    void **buf2_, int size2,
-                                    void **buf3_, int size3,
-                                    void **buf4_, int size4)
+void *alloc_four_nonaliased_buffers(void **buf1_, size_t size1,
+                                    void **buf2_, size_t size2,
+                                    void **buf3_, size_t size3,
+                                    void **buf4_, size_t size4)
 {
     char **buf1 = (char **)buf1_, **buf2 = (char **)buf2_;
     char **buf3 = (char **)buf3_, **buf4 = (char **)buf4_;
@@ -353,7 +376,7 @@ void *alloc_four_nonaliased_buffers(void **buf1_, int size1,
     if (!buf4 || size4 < 0)
         size4 = 0;
 
-    ptr = buf = 
+    ptr = buf =
         (char *)malloc(size1 + size2 + size3 + size4 + 9 * ALIGN_PADDING);
     memset(buf, 0xCC, size1 + size2 + size3 + size4 + 9 * ALIGN_PADDING);
 

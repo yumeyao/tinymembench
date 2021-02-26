@@ -44,13 +44,13 @@
 #include "asm-opt.h"
 #include "version.h"
 
-#define SIZE             (32 * 1024 * 1024)
-#define BLOCKSIZE        2048
+#define SIZE (1024 * 1024 * 1024)
+#define BLOCKSIZE 2048
 #ifndef MAXREPEATS
-# define MAXREPEATS      10
+#define MAXREPEATS 10
 #endif
 #ifndef LATBENCH_COUNT
-# define LATBENCH_COUNT  10000000
+#define LATBENCH_COUNT 10000000
 #endif
 
 #ifdef __linux__
@@ -64,7 +64,8 @@ static void *mmap_framebuffer(size_t *fbsize)
         if ((fd = open("/dev/graphics/fb0", O_RDWR)) == -1)
             return NULL;
 
-    if (ioctl(fd, FBIOGET_FSCREENINFO, &finfo)) {
+    if (ioctl(fd, FBIOGET_FSCREENINFO, &finfo))
+    {
         close(fd);
         return NULL;
     }
@@ -81,10 +82,10 @@ static void *mmap_framebuffer(size_t *fbsize)
 
 struct f_data
 {
-    void (*func)(int64_t *, int64_t *, int);
+    void (*func)(int64_t *, int64_t *, size_t);
     int64_t *arg1;
     int64_t *arg2;
-    int      arg3;
+    int arg3;
 };
 pthread_cond_t p_ready;
 pthread_cond_t p_start;
@@ -175,7 +176,7 @@ static double bandwidth_bench_helper(int threads,
                                      int size, int blocksize,
                                      const char *indent_prefix,
                                      int use_tmpbuf,
-                                     void (*f)(int64_t *, int64_t *, int),
+                                     void (*f)(int64_t *, int64_t *, size_t),
                                      const char *description)
 {
     int i, j, loopcount, innerloopcount, n;
@@ -287,41 +288,39 @@ static double bandwidth_bench_helper(int threads,
     return maxspeed;
 }
 
-void memcpy_wrapper(int64_t *dst, int64_t *src, int size)
+void memcpy_wrapper(int64_t *dst, int64_t *src, size_t size)
 {
     memcpy(dst, src, size);
 }
 
-void memset_wrapper(int64_t *dst, int64_t *src, int size)
+void memset_wrapper(int64_t *dst, int64_t *src, size_t size)
 {
     memset(dst, src[0], size);
 }
 
 static bench_info c_benchmarks[] =
-{
-    { "C copy backwards", 0, aligned_block_copy_backwards },
-    { "C copy backwards (32 byte blocks)", 0, aligned_block_copy_backwards_bs32 },
-    { "C copy backwards (64 byte blocks)", 0, aligned_block_copy_backwards_bs64 },
-    { "C copy", 0, aligned_block_copy },
-    { "C copy prefetched (32 bytes step)", 0, aligned_block_copy_pf32 },
-    { "C copy prefetched (64 bytes step)", 0, aligned_block_copy_pf64 },
-    { "C 2-pass copy", 1, aligned_block_copy },
-    { "C 2-pass copy prefetched (32 bytes step)", 1, aligned_block_copy_pf32 },
-    { "C 2-pass copy prefetched (64 bytes step)", 1, aligned_block_copy_pf64 },
-    { "C fetch", 0, aligned_block_fetch },
-    { "C fill", 0, aligned_block_fill },
-    { "C fill (shuffle within 16 byte blocks)", 0, aligned_block_fill_shuffle16 },
-    { "C fill (shuffle within 32 byte blocks)", 0, aligned_block_fill_shuffle32 },
-    { "C fill (shuffle within 64 byte blocks)", 0, aligned_block_fill_shuffle64 },
-    { NULL, 0, NULL }
-};
+    {
+        {"C copy backwards", 0, aligned_block_copy_backwards},
+        {"C copy backwards (32 byte blocks)", 0, aligned_block_copy_backwards_bs32},
+        {"C copy backwards (64 byte blocks)", 0, aligned_block_copy_backwards_bs64},
+        {"C copy", 0, aligned_block_copy},
+        {"C copy prefetched (32 bytes step)", 0, aligned_block_copy_pf32},
+        {"C copy prefetched (64 bytes step)", 0, aligned_block_copy_pf64},
+        {"C 2-pass copy", 1, aligned_block_copy},
+        {"C 2-pass copy prefetched (32 bytes step)", 1, aligned_block_copy_pf32},
+        {"C 2-pass copy prefetched (64 bytes step)", 1, aligned_block_copy_pf64},
+        {"C fetch", 0, aligned_block_fetch},
+        {"C fill", 0, aligned_block_fill},
+        {"C fill (shuffle within 16 byte blocks)", 0, aligned_block_fill_shuffle16},
+        {"C fill (shuffle within 32 byte blocks)", 0, aligned_block_fill_shuffle32},
+        {"C fill (shuffle within 64 byte blocks)", 0, aligned_block_fill_shuffle64},
+        {NULL, 0, NULL}};
 
 static bench_info libc_benchmarks[] =
-{
-    { "standard memcpy", 0, memcpy_wrapper },
-    { "standard memset", 0, memset_wrapper },
-    { NULL, 0, NULL }
-};
+    {
+        {"standard memcpy", 0, memcpy_wrapper},
+        {"standard memset", 0, memset_wrapper},
+        {NULL, 0, NULL}};
 
 void bandwidth_bench(int threads,
                      int64_t *dstbuf, int64_t *srcbuf, int64_t *tmpbuf,
@@ -350,12 +349,12 @@ static void __attribute__((noinline)) random_read_test(char *zerobuffer,
 
 #ifdef __arm__
     uint32_t tmp;
-    __asm__ volatile (
+    __asm__ volatile(
         "subs %[count], %[count],       #16\n"
         "blt  1f\n"
-    "0:\n"
+        "0:\n"
         "subs %[count], %[count],       #16\n"
-    ".rept 16\n"
+        ".rept 16\n"
         "mla  %[seed],  %[c1103515245], %[seed],        %[c12345]\n"
         "and  %[v],     %[xFF],         %[seed],        lsr #16\n"
         "mla  %[seed],  %[c1103515245], %[seed],        %[c12345]\n"
@@ -367,30 +366,31 @@ static void __attribute__((noinline)) random_read_test(char *zerobuffer,
         "and  %[v],     %[v],           %[addrmask]\n"
         "ldrb %[v],     [%[zerobuffer], %[v]]\n"
         "orr  %[seed],  %[seed],        %[v]\n"
-    ".endr\n"
+        ".endr\n"
         "bge  0b\n"
-    "1:\n"
+        "1:\n"
         "add  %[count], %[count],       #16\n"
-        : [count] "+&r" (count),
-          [seed] "+&r" (seed), [v] "=&r" (v),
-          [tmp] "=&r" (tmp)
-        : [c1103515245] "r" (1103515245), [c12345] "r" (12345),
-          [xFF00] "r" (0xFF00), [xFF] "r" (0xFF),
-          [x7FFF0000] "r" (0x7FFF0000),
-          [zerobuffer] "r" (zerobuffer),
-          [addrmask] "r" (addrmask)
+        : [count] "+&r"(count),
+          [seed] "+&r"(seed), [v] "=&r"(v),
+          [tmp] "=&r"(tmp)
+        : [c1103515245] "r"(1103515245), [c12345] "r"(12345),
+          [xFF00] "r"(0xFF00), [xFF] "r"(0xFF),
+          [x7FFF0000] "r"(0x7FFF0000),
+          [zerobuffer] "r"(zerobuffer),
+          [addrmask] "r"(addrmask)
         : "cc");
 #else
-    #define RANDOM_MEM_ACCESS()                 \
-        seed = seed * 1103515245 + 12345;       \
-        v = (seed >> 16) & 0xFF;                \
-        seed = seed * 1103515245 + 12345;       \
-        v |= (seed >> 8) & 0xFF00;              \
-        seed = seed * 1103515245 + 12345;       \
-        v |= seed & 0x7FFF0000;                 \
-        seed |= zerobuffer[v & addrmask];
+#define RANDOM_MEM_ACCESS()           \
+    seed = seed * 1103515245 + 12345; \
+    v = (seed >> 16) & 0xFF;          \
+    seed = seed * 1103515245 + 12345; \
+    v |= (seed >> 8) & 0xFF00;        \
+    seed = seed * 1103515245 + 12345; \
+    v |= seed & 0x7FFF0000;           \
+    seed |= zerobuffer[v & addrmask];
 
-    while (count >= 16) {
+    while (count >= 16)
+    {
         RANDOM_MEM_ACCESS();
         RANDOM_MEM_ACCESS();
         RANDOM_MEM_ACCESS();
@@ -411,7 +411,8 @@ static void __attribute__((noinline)) random_read_test(char *zerobuffer,
     }
 #endif
     dummy = seed;
-    #undef RANDOM_MEM_ACCESS
+    (void)dummy; // set but not used suppresion
+#undef RANDOM_MEM_ACCESS
 }
 
 static void __attribute__((noinline)) random_dual_read_test(char *zerobuffer,
@@ -424,12 +425,12 @@ static void __attribute__((noinline)) random_dual_read_test(char *zerobuffer,
 
 #ifdef __arm__
     uint32_t tmp;
-    __asm__ volatile (
+    __asm__ volatile(
         "subs %[count], %[count],       #16\n"
         "blt  1f\n"
-    "0:\n"
+        "0:\n"
         "subs %[count], %[count],       #16\n"
-    ".rept 16\n"
+        ".rept 16\n"
         "mla  %[seed],  %[c1103515245], %[seed],        %[c12345]\n"
         "and  %[v1],    %[xFF00],       %[seed],        lsr #8\n"
         "mla  %[seed],  %[c1103515245], %[seed],        %[c12345]\n"
@@ -451,38 +452,39 @@ static void __attribute__((noinline)) random_dual_read_test(char *zerobuffer,
         "ldrb %[v1],    [%[zerobuffer], %[v1]]\n"
         "orr  %[seed],  %[seed],        %[v2]\n"
         "add  %[seed],  %[seed],        %[v1]\n"
-    ".endr\n"
+        ".endr\n"
         "bge  0b\n"
-    "1:\n"
+        "1:\n"
         "add  %[count], %[count],       #16\n"
-        : [count] "+&r" (count),
-          [seed] "+&r" (seed), [v1] "=&r" (v1), [v2] "=&r" (v2),
-          [tmp] "=&r" (tmp)
-        : [c1103515245] "r" (1103515245), [c12345] "r" (12345),
-          [xFF00] "r" (0xFF00), [xFF] "r" (0xFF),
-          [x7FFF0000] "r" (0x7FFF0000),
-          [zerobuffer] "r" (zerobuffer),
-          [addrmask] "r" (addrmask)
+        : [count] "+&r"(count),
+          [seed] "+&r"(seed), [v1] "=&r"(v1), [v2] "=&r"(v2),
+          [tmp] "=&r"(tmp)
+        : [c1103515245] "r"(1103515245), [c12345] "r"(12345),
+          [xFF00] "r"(0xFF00), [xFF] "r"(0xFF),
+          [x7FFF0000] "r"(0x7FFF0000),
+          [zerobuffer] "r"(zerobuffer),
+          [addrmask] "r"(addrmask)
         : "cc");
 #else
-    #define RANDOM_MEM_ACCESS()                 \
-        seed = seed * 1103515245 + 12345;       \
-        v1 = (seed >> 8) & 0xFF00;              \
-        seed = seed * 1103515245 + 12345;       \
-        v2 = (seed >> 8) & 0xFF00;              \
-        seed = seed * 1103515245 + 12345;       \
-        v1 |= seed & 0x7FFF0000;                \
-        seed = seed * 1103515245 + 12345;       \
-        v2 |= seed & 0x7FFF0000;                \
-        seed = seed * 1103515245 + 12345;       \
-        v1 |= (seed >> 16) & 0xFF;              \
-        v2 |= (seed >> 24);                     \
-        v2 &= addrmask;                         \
-        v1 ^= v2;                               \
-        seed |= zerobuffer[v2];                 \
-        seed += zerobuffer[v1 & addrmask];
+#define RANDOM_MEM_ACCESS()           \
+    seed = seed * 1103515245 + 12345; \
+    v1 = (seed >> 8) & 0xFF00;        \
+    seed = seed * 1103515245 + 12345; \
+    v2 = (seed >> 8) & 0xFF00;        \
+    seed = seed * 1103515245 + 12345; \
+    v1 |= seed & 0x7FFF0000;          \
+    seed = seed * 1103515245 + 12345; \
+    v2 |= seed & 0x7FFF0000;          \
+    seed = seed * 1103515245 + 12345; \
+    v1 |= (seed >> 16) & 0xFF;        \
+    v2 |= (seed >> 24);               \
+    v2 &= addrmask;                   \
+    v1 ^= v2;                         \
+    seed |= zerobuffer[v2];           \
+    seed += zerobuffer[v1 & addrmask];
 
-    while (count >= 16) {
+    while (count >= 16)
+    {
         RANDOM_MEM_ACCESS();
         RANDOM_MEM_ACCESS();
         RANDOM_MEM_ACCESS();
@@ -503,7 +505,8 @@ static void __attribute__((noinline)) random_dual_read_test(char *zerobuffer,
     }
 #endif
     dummy = seed;
-    #undef RANDOM_MEM_ACCESS
+    (void)dummy; // suppress set but not used
+#undef RANDOM_MEM_ACCESS
 }
 
 static uint32_t rand32()
@@ -515,7 +518,7 @@ static uint32_t rand32()
     return (hi << 16) + lo;
 }
 
-int latency_bench(int size, int count, int use_hugepage)
+int latency_bench(size_t size, int count, int use_hugepage)
 {
     double t, t2, t_before, t_after, t_noaccess, t_noaccess2;
     double xs, xs1, xs2;
@@ -534,8 +537,7 @@ int latency_bench(int size, int count, int use_hugepage)
     if (posix_memalign((void **)&buffer_alloc, 4 * 1024 * 1024, size) != 0)
         return 0;
     buffer = buffer_alloc;
-    if (use_hugepage && madvise(buffer, size, use_hugepage > 0 ?
-                                MADV_HUGEPAGE : MADV_NOHUGEPAGE) != 0)
+    if (use_hugepage && madvise(buffer, size, use_hugepage > 0 ? MADV_HUGEPAGE : MADV_NOHUGEPAGE) != 0)
     {
         free(buffer_alloc);
         return 0;
@@ -554,6 +556,7 @@ int latency_bench(int size, int count, int use_hugepage)
         t_before = gettime();
         random_dual_read_test(buffer, count, 1);
         t_after = gettime();
+        t_noaccess2 = 0.0;
         if (n == 1 || t_after - t_before < t_noaccess2)
             t_noaccess2 = t_after - t_before;
     }
@@ -585,7 +588,8 @@ int latency_bench(int size, int count, int use_hugepage)
             random_read_test(buffer + testoffs, count, nbits);
             t_after = gettime();
             t = t_after - t_before - t_noaccess;
-            if (t < 0) t = 0;
+            if (t < 0)
+                t = 0;
 
             xs1 += t;
             xs2 += t * t;
@@ -597,7 +601,8 @@ int latency_bench(int size, int count, int use_hugepage)
             random_dual_read_test(buffer + testoffs, count, nbits);
             t_after = gettime();
             t2 = t_after - t_before - t_noaccess2;
-            if (t2 < 0) t2 = 0;
+            if (t2 < 0)
+                t2 = 0;
 
             ys1 += t2;
             ys2 += t2 * t2;
@@ -614,7 +619,7 @@ int latency_bench(int size, int count, int use_hugepage)
             }
         }
         printf("%10d : %6.1f ns          /  %6.1f ns \n", (1 << nbits),
-            min_t * 1000000000. / count,  min_t2 * 1000000000. / count);
+               min_t * 1000000000. / count, min_t2 * 1000000000. / count);
     }
     free(buffer_alloc);
     return 1;
@@ -622,7 +627,8 @@ int latency_bench(int size, int count, int use_hugepage)
 
 int main(int argc, char *argv[])
 {
-    int latbench_size = SIZE * 2, latbench_count = LATBENCH_COUNT;
+    size_t latbench_size = (size_t)SIZE * 2;
+    int latbench_count = LATBENCH_COUNT;
     int64_t *srcbuf, *dstbuf, *tmpbuf;
     void *poolbuf;
     size_t bufsize = SIZE;
@@ -672,7 +678,8 @@ int main(int argc, char *argv[])
     printf(" ---\n");
     bandwidth_bench(threads, dstbuf, srcbuf, tmpbuf, bufsize, BLOCKSIZE, " ", libc_benchmarks);
     bench_info *bi = get_asm_benchmarks();
-    if (bi->f) {
+    if (bi->f)
+    {
         printf(" ---\n");
         bandwidth_bench(threads, dstbuf, srcbuf, tmpbuf, bufsize, BLOCKSIZE, " ", bi);
     }
