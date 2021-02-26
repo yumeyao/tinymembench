@@ -22,6 +22,7 @@
  */
 
 #define _GNU_SOURCE
+#include <getopt.h>
 #include <string.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -29,10 +30,13 @@
 #include <math.h>
 #include <sys/time.h>
 
+#if !defined(_WIN64) && !defined(_WIN32)
+#include <unistd.h>
+#endif
+
 #ifdef __linux__
 #include <pthread.h>
 #include <sched.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <semaphore.h>
 #include <linux/fb.h>
@@ -52,6 +56,8 @@
 #ifndef LATBENCH_COUNT
 #define LATBENCH_COUNT 10000000
 #endif
+
+char *progname;
 
 #ifdef __linux__
 static void *mmap_framebuffer(size_t *fbsize)
@@ -625,6 +631,21 @@ int latency_bench(size_t size, int count, int use_hugepage)
     return 1;
 }
 
+static void
+usage()
+{
+    fprintf(stderr, "usage: %s [-s buffer size -b blocksize -l latency max size -c latency count]\n",
+            progname);
+    fprintf(stderr, "\t-b Memory blocksize in Bytes <%d>\n", BLOCKSIZE);
+    fprintf(stderr, "\t-s Memory buffer size in Bytes <%d>\n", SIZE);
+    fprintf(stderr, "\t-l Latency test maximum buffer size in Bytes <%ld>\n", (size_t)SIZE * 2);
+    fprintf(stderr, "\t-c Latency count <%d>\n", LATBENCH_COUNT);
+    fprintf(stderr, "\t--run_sse Include SSE2 tests <false>\n");
+    fprintf(stderr, "\t--run_sse Include AVX2 tests <false>\n");
+    fprintf(stderr, "\t--run_sse Include AVX512 tests <false>\n");
+    exit(EXIT_FAILURE);
+}
+
 int main(int argc, char *argv[])
 {
     size_t latbench_size = (size_t)SIZE * 2;
@@ -633,11 +654,53 @@ int main(int argc, char *argv[])
     void *poolbuf;
     size_t bufsize = SIZE;
     int threads;
-#ifdef __linux__
-    size_t fbsize = 0;
-    int64_t *fbbuf = mmap_framebuffer(&fbsize);
-    fbsize = (fbsize / BLOCKSIZE) * BLOCKSIZE;
-#endif
+    int blocksize = BLOCKSIZE;
+    static int run_sse2 = 0;
+    static int run_avx2 = 0;
+    static int run_avx512 = 0;
+    int c;
+
+    progname = argv[0];
+    while (1)
+    {
+        static struct option long_options[] = {
+            {"run_sse2", no_argument, &run_sse2, 1},
+            {"run_avx2", no_argument, &run_avx2, 1},
+            {"run_avx512", no_argument, &run_avx512, 1},
+            {0, 0, 0, 0}};
+        /* getopt_long stores the option index here. */
+        int option_index = 0;
+        c = getopt_long(argc, argv, "hb:c:l:s:", long_options, &option_index);
+        if (c == -1)
+            break;
+        switch (c)
+        {
+        case 0:
+            if (long_options[option_index].flag != 0)
+                break;
+            printf("option %s", long_options[option_index].name);
+            if (optarg)
+                printf(" with arg %s", optarg);
+            printf("\n");
+            break;
+        case 'b':
+            blocksize = atoi(optarg);
+            break;
+        case 'c':
+            latbench_count = atoi(optarg);
+            break;
+        case 'l':
+            latbench_size = atoi(optarg);
+            break;
+        case 's':
+            bufsize = atoi(optarg);
+            break;
+        case 'h':
+            usage();
+        default:
+            abort();
+        }
+    }
 
     printf("tinymembench-pthread v" VERSION " (simple benchmark for memory throughput and latency)\n");
 
@@ -662,6 +725,8 @@ int main(int argc, char *argv[])
     printf("\n");
     printf("==========================================================================\n");
     printf("== Memory bandwidth tests                                               ==\n");
+    printf("== size Bytes: %zu                                                ==\n", bufsize);
+    printf("== blocksize Bytes: %d                                                ==\n", blocksize);
     printf("==                                                                      ==\n");
     printf("== Note 1: 1MB = 1000000 bytes                                          ==\n");
     printf("== Note 2: Results for 'copy' tests show how many bytes can be          ==\n");
@@ -674,19 +739,48 @@ int main(int argc, char *argv[])
     printf("==         brackets                                                     ==\n");
     printf("==========================================================================\n\n");
 
-    bandwidth_bench(threads, dstbuf, srcbuf, tmpbuf, bufsize, BLOCKSIZE, " ", c_benchmarks);
+    bandwidth_bench(threads, dstbuf, srcbuf, tmpbuf, bufsize, blocksize, " ", c_benchmarks);
     printf(" ---\n");
-    bandwidth_bench(threads, dstbuf, srcbuf, tmpbuf, bufsize, BLOCKSIZE, " ", libc_benchmarks);
-    bench_info *bi = get_asm_benchmarks();
-    if (bi->f)
+    bandwidth_bench(threads, dstbuf, srcbuf, tmpbuf, bufsize, blocksize, " ", libc_benchmarks);
+
+    if (run_sse2)
     {
-        printf(" ---\n");
-        bandwidth_bench(threads, dstbuf, srcbuf, tmpbuf, bufsize, BLOCKSIZE, " ", bi);
+        bench_info *bi = get_asm_benchmarks();
+        if (bi && bi->f)
+        {
+            printf(" ---\n");
+            bandwidth_bench(threads, dstbuf, srcbuf, tmpbuf, bufsize, blocksize, " ", bi);
+        }
+    }
+
+    if (run_avx2)
+    {
+        bench_info *bi_avx2 = get_avx2_benchmarks();
+        if (bi_avx2 && bi_avx2->f)
+        {
+            printf(" ---\n");
+            bandwidth_bench(threads, dstbuf, srcbuf, tmpbuf, bufsize, blocksize, " ", bi_avx2);
+        }
+    }
+
+    if (run_avx512)
+    {
+        bench_info *bi_avx512 = get_avx512_benchmarks();
+        if (bi_avx512 && bi_avx512->f)
+        {
+            printf(" ---\n");
+            bandwidth_bench(threads, dstbuf, srcbuf, tmpbuf, bufsize, blocksize, " ", bi_avx512);
+        }
     }
 
 #ifdef __linux__
+    bench_info *bi = NULL;
+    size_t fbsize = 0;
+    int64_t *fbbuf = mmap_framebuffer(&fbsize);
+    fbsize = (fbsize / blocksize) * blocksize;
+
     bi = get_asm_framebuffer_benchmarks();
-    if (bi->f && fbbuf)
+    if (bi && bi->f && fbbuf)
     {
         printf("\n");
         printf("==========================================================================\n");
@@ -712,8 +806,9 @@ int main(int argc, char *argv[])
         srcbuf = fbbuf;
         if (bufsize > fbsize)
             bufsize = fbsize;
-        bandwidth_bench(1, dstbuf, srcbuf, tmpbuf, bufsize, BLOCKSIZE, " ", bi);
+        bandwidth_bench(1, dstbuf, srcbuf, tmpbuf, bufsize, blocksize, " ", bi);
     }
+    /* TODO: add get_avx2_framebuffer_benchmarks and get_avx512_framebuffer_benchmarks */
 #endif
 
     free(poolbuf);
@@ -721,6 +816,8 @@ int main(int argc, char *argv[])
     printf("\n");
     printf("==========================================================================\n");
     printf("== Memory latency test                                                  ==\n");
+    printf("== latbench_size Bytes: %zu                                       ==\n", latbench_size);
+    printf("== latbench_count: %d                                             ==\n", latbench_count);
     printf("==                                                                      ==\n");
     printf("== Average time is measured for random memory accesses in the buffers   ==\n");
     printf("== of different sizes. The larger is the buffer, the more significant   ==\n");

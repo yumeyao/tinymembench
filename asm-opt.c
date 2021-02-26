@@ -187,18 +187,125 @@ static int check_sse2_support(void)
 #endif
 }
 
+#include "x86-avx2.h"
+
+static bench_info x86_avx2[] =
+{
+    { "AVX2 copy", 0, aligned_block_copy_avx2 },
+    { "AVX2 nontemporal copy", 0, aligned_block_copy_nt_avx2 },
+    { "AVX2 copy prefetched (32 bytes step)", 0, aligned_block_copy_pf32_avx2 },
+    { "AVX2 copy prefetched (64 bytes step)", 0, aligned_block_copy_pf64_avx2 },
+    { "AVX2 nontemporal copy prefetched (32 bytes step)", 0, aligned_block_copy_nt_pf32_avx2 },
+    { "AVX2 nontemporal copy prefetched (64 bytes step)", 0, aligned_block_copy_nt_pf64_avx2 },
+    { "AVX2 2-pass copy", 1, aligned_block_copy_avx2 },
+    { "AVX2 2-pass copy prefetched (32 bytes step)", 1, aligned_block_copy_pf32_avx2 },
+    { "AVX2 2-pass copy prefetched (64 bytes step)", 1, aligned_block_copy_pf64_avx2 },
+    { "AVX2 2-pass nontemporal copy", 1, aligned_block_copy_nt_avx2 },
+    { "AVX2 fill", 0, aligned_block_fill_avx2 },
+    { "AVX2 nontemporal fill", 0, aligned_block_fill_nt_avx2 },
+    { NULL, 0, NULL }
+};
+
+static bench_info x86_avx2_fb[] =
+{
+    { "AVX2 copy (from framebuffer)", 0, aligned_block_copy_avx2 },
+    { "AVX2 2-pass copy (from framebuffer)", 1, aligned_block_copy_avx2 },
+    { NULL, 0, NULL }
+};
+
+static int check_avx2_support(void)
+{
+#ifdef __amd64__
+    /* FIXME - need a real check for AVX2 support */
+    return 1; /* We assume that all 64-bit processors have AVX2 support */
+#else
+    return 0;
+#endif
+}
+
+#include "x86-avx512.h"
+
+static bench_info x86_avx512[] =
+{
+    { "AVX512 copy", 0, aligned_block_copy_avx512 },
+    { "AVX512 nontemporal copy", 0, aligned_block_copy_nt_avx512 },
+    { "AVX512 copy prefetched (32 bytes step)", 0, aligned_block_copy_pf32_avx512 },
+    { "AVX512 copy prefetched (64 bytes step)", 0, aligned_block_copy_pf64_avx512 },
+    { "AVX512 nontemporal copy prefetched (32 bytes step)", 0, aligned_block_copy_nt_pf32_avx512 },
+    { "AVX512 nontemporal copy prefetched (64 bytes step)", 0, aligned_block_copy_nt_pf64_avx512 },
+    { "AVX512 2-pass copy", 1, aligned_block_copy_avx512 },
+    { "AVX512 2-pass copy prefetched (32 bytes step)", 1, aligned_block_copy_pf32_avx512 },
+    { "AVX512 2-pass copy prefetched (64 bytes step)", 1, aligned_block_copy_pf64_avx512 },
+    { "AVX512 2-pass nontemporal copy", 1, aligned_block_copy_nt_avx512 },
+    { "AVX512 fill", 0, aligned_block_fill_avx512 },
+    { "AVX512 nontemporal fill", 0, aligned_block_fill_nt_avx512 },
+    { NULL, 0, NULL }
+};
+
+static bench_info x86_avx512_fb[] =
+{
+    { "AVX512 copy (from framebuffer)", 0, aligned_block_copy_avx512 },
+    { "AVX512 2-pass copy (from framebuffer)", 1, aligned_block_copy_avx512 },
+    { NULL, 0, NULL }
+};
+
+static int check_avx512_support(void)
+{
+#ifdef __amd64__
+    /* FIXME - need a real check for AVX512 support */
+    return 1; /* We assume that all 64-bit processors have AVX512 support */
+#else
+    return 0;
+#endif
+}
+
 bench_info *get_asm_benchmarks(void)
 {
-    if (check_sse2_support())
+    if (check_sse2_support()) {
         return x86_sse2;
-    else
+    } else {
         return empty;
+    }
 }
 
 bench_info *get_asm_framebuffer_benchmarks(void)
 {
     if (check_sse2_support())
         return x86_sse2_fb;
+    else
+        return empty;
+}
+
+bench_info *get_avx2_benchmarks(void)
+{
+    if (check_avx2_support()) {
+        return x86_avx2;
+    } else {
+        return empty;
+    }
+}
+
+bench_info *get_avx2_framebuffer_benchmarks(void)
+{
+    if (check_avx2_support())
+        return x86_avx2_fb;
+    else
+        return empty;
+}
+
+bench_info *get_avx512_benchmarks(void)
+{
+    if (check_avx512_support()) {
+        return x86_avx512;
+    } else {
+        return empty;
+    }
+}
+
+bench_info *get_avx512_framebuffer_benchmarks(void)
+{
+    if (check_avx512_support())
+        return x86_avx512_fb;
     else
         return empty;
 }
