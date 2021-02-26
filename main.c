@@ -657,6 +657,8 @@ int main(int argc, char *argv[])
     static int run_sse2 = 0;
     static int run_avx2 = 0;
     static int run_avx512 = 0;
+    void *poolbuf = NULL;
+    int64_t *srcbuf, *dstbuf, *tmpbuf;
 
     progname = argv[0];
     while (1)
@@ -700,57 +702,14 @@ int main(int argc, char *argv[])
         }
     }
 
-    int64_t *srcbuf, *dstbuf, *tmpbuf;
-    void *poolbuf;
-    size_t bufsize = SIZE;
+#if 0
     int threads;
     int blocksize = BLOCKSIZE;
     static int run_sse2 = 0;
     static int run_avx2 = 0;
     static int run_avx512 = 0;
     int c;
-
-    progname = argv[0];
-    while (1)
-    {
-        static struct option long_options[] = {
-            {"run_sse2", no_argument, &run_sse2, 1},
-            {"run_avx2", no_argument, &run_avx2, 1},
-            {"run_avx512", no_argument, &run_avx512, 1},
-            {0, 0, 0, 0}};
-        /* getopt_long stores the option index here. */
-        int option_index = 0;
-        c = getopt_long(argc, argv, "hb:c:l:s:", long_options, &option_index);
-        if (c == -1)
-            break;
-        switch (c)
-        {
-        case 0:
-            if (long_options[option_index].flag != 0)
-                break;
-            printf("option %s", long_options[option_index].name);
-            if (optarg)
-                printf(" with arg %s", optarg);
-            printf("\n");
-            break;
-        case 'b':
-            blocksize = atoi(optarg);
-            break;
-        case 'c':
-            latbench_count = atoi(optarg);
-            break;
-        case 'l':
-            latbench_size = atoi(optarg);
-            break;
-        case 's':
-            bufsize = atoi(optarg);
-            break;
-        case 'h':
-            usage();
-        default:
-            abort();
-        }
-    }
+#endif // 0
 
     printf("tinymembench-pthread v" VERSION " (simple benchmark for memory throughput and latency)\n");
 

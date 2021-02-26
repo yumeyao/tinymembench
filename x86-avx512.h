@@ -28,37 +28,38 @@
 #include <stdint.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-void aligned_block_copy_avx512(int64_t * __restrict dst,
-                             int64_t * __restrict src,
-                             int                  size);
-void aligned_block_copy_nt_avx512(int64_t * __restrict dst,
-                                int64_t * __restrict src,
-                                int                  size);
+    void aligned_block_copy_avx512(int64_t *__restrict dst,
+                                   int64_t *__restrict src,
+                                   size_t size);
+    void aligned_block_copy_nt_avx512(int64_t *__restrict dst,
+                                      int64_t *__restrict src,
+                                      size_t size);
 
-void aligned_block_copy_pf32_avx512(int64_t * __restrict dst,
-                                  int64_t * __restrict src,
-                                  int                  size);
-void aligned_block_copy_pf64_avx512(int64_t * __restrict dst,
-                                  int64_t * __restrict src,
-                                  int                  size);
+    void aligned_block_copy_pf32_avx512(int64_t *__restrict dst,
+                                        int64_t *__restrict src,
+                                        size_t size);
+    void aligned_block_copy_pf64_avx512(int64_t *__restrict dst,
+                                        int64_t *__restrict src,
+                                        size_t size);
 
-void aligned_block_copy_nt_pf32_avx512(int64_t * __restrict dst,
-                                     int64_t * __restrict src,
-                                     int                  size);
-void aligned_block_copy_nt_pf64_avx512(int64_t * __restrict dst,
-                                     int64_t * __restrict src,
-                                     int                  size);
+    void aligned_block_copy_nt_pf32_avx512(int64_t *__restrict dst,
+                                           int64_t *__restrict src,
+                                           size_t size);
+    void aligned_block_copy_nt_pf64_avx512(int64_t *__restrict dst,
+                                           int64_t *__restrict src,
+                                           size_t size);
 
-void aligned_block_fill_avx512(int64_t * __restrict dst,
-                             int64_t * __restrict src,
-                             int                  size);
+    void aligned_block_fill_avx512(int64_t *__restrict dst,
+                                   int64_t *__restrict src,
+                                   size_t size);
 
-void aligned_block_fill_nt_avx512(int64_t * __restrict dst,
-                                int64_t * __restrict src,
-                                int                  size);
+    void aligned_block_fill_nt_avx512(int64_t *__restrict dst,
+                                      int64_t *__restrict src,
+                                      size_t size);
 
 #ifdef __cplusplus
 }
