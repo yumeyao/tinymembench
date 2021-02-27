@@ -739,7 +739,7 @@ int main(int argc, char *argv[])
     printf("==                                                                      ==\n");
     printf("== Note 1: 1MB = 1000000 bytes                                          ==\n");
     printf("== Note 2: Results for 'copy' tests show how many bytes can be          ==\n");
-    printf("==         copied per second (adding together read and writen           ==\n");
+    printf("==         copied per second (adding together read and written          ==\n");
     printf("==         bytes would have provided twice higher numbers)              ==\n");
     printf("== Note 3: 2-pass copy means that we are using a small temporary buffer ==\n");
     printf("==         to first fetch data into it, and only then write it to the   ==\n");
