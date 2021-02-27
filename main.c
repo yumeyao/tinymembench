@@ -654,9 +654,9 @@ int main(int argc, char *argv[])
     int threads;
     size_t bufsize = SIZE;
     int blocksize = BLOCKSIZE;
-    static int run_sse2 = 0;
-    static int run_avx2 = 0;
-    static int run_avx512 = 0;
+    static int run_sse2 = 1;
+    static int run_avx2 = 1;
+    static int run_avx512 = 1;
     void *poolbuf = NULL;
     int64_t *srcbuf, *dstbuf, *tmpbuf;
 
