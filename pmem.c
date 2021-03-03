@@ -32,6 +32,8 @@
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <unistd.h>
+#include <errno.h>
+#include <assert.h>
 
 #include "pmem.h"
 
@@ -42,6 +44,52 @@ static int pmem_fd = -1;
 static char *pmem_map = NULL;
 static size_t pmem_off = 0;
 static size_t pmem_size = 0;
+
+int open_pmem_device(const char *daxname)
+{
+    char buffer[512];
+    struct stat st;
+    int fd = -1;
+
+    do
+    {
+        if (0 != strcmp(daxname, "/dev/"))
+        {
+            buffer[0] = '\0';
+        }
+        else
+        {
+            strcpy(buffer, "/dev/");
+        }
+        strncat(buffer, daxname, sizeof(buffer) - 1);
+
+        if (stat(daxname, &st) != -1)
+        {
+            if (S_ISBLK(st.st_mode))
+            {
+                fprintf(stderr, "Block device is unsupported\n");
+                break;
+            }
+            if (S_ISDIR(st.st_mode))
+            {
+                fprintf(stderr, "Directory is unsupported\n");
+                break;
+            }
+
+            if (st.st_size < 4096)
+            {
+                fprintf(stderr, "Size is too small\n");
+                break;
+            }
+        }
+
+        fd = open(buffer, O_RDWR);
+        break;
+
+    } while (0);
+
+    return fd;
+}
 
 static size_t align_up1gb(size_t size)
 {
@@ -72,7 +120,7 @@ static void *alloc_pmem_buffer(size_t size)
 void *alloc_four_pmem_buffers(void **buf1_, size_t size1,
                               void **buf2_, size_t size2,
                               void **buf3_, size_t size3,
-                              void **buf4_, size_t size4, const char *daxname)
+                              void **buf4_, size_t size4, int memfd)
 {
     int page1gb = 0;
     int page2mb = 0;
@@ -84,15 +132,16 @@ void *alloc_four_pmem_buffers(void **buf1_, size_t size1,
     // Gross overestimate
     space_needed = size1 + size2 + size3 + size4 + (pmem_1gb * page1gb) + (pmem_2mb * page2mb) + (pmem_4kb * page4kb);
 
-    pmem_fd = open(daxname, O_RDWR);
-    if (0 > pmem_fd)
+    if (memfd < 0)
     {
         return NULL;
     }
+    pmem_fd = memfd;
 
     pmem_map = mmap(NULL, space_needed, PROT_READ | PROT_WRITE, MAP_SHARED, pmem_fd, 0);
     if (MAP_FAILED == pmem_map)
     {
+        fprintf(stderr, "%s: mmap failed (%d): %s ", __func__, errno, strerror(errno));
         close(pmem_fd);
         pmem_fd = -1;
         return NULL;
@@ -100,10 +149,22 @@ void *alloc_four_pmem_buffers(void **buf1_, size_t size1,
 
     pmem_size = space_needed;
 
-    *buf1_ = alloc_pmem_buffer(size1);
-    *buf2_ = alloc_pmem_buffer(size2);
-    *buf3_ = alloc_pmem_buffer(size3);
-    *buf4_ = alloc_pmem_buffer(size4);
+    if (NULL != buf1_)
+    {
+        *buf1_ = alloc_pmem_buffer(size1);
+    }
+    if (NULL != buf2_)
+    {
+        *buf2_ = alloc_pmem_buffer(size2);
+    }
+    if (NULL != buf3_)
+    {
+        *buf3_ = alloc_pmem_buffer(size3);
+    }
+    if (NULL != buf4_)
+    {
+        *buf4_ = alloc_pmem_buffer(size4);
+    }
 
-    return NULL;
+    return pmem_map;
 }

@@ -42,11 +42,13 @@
 #include <linux/fb.h>
 #include <sys/mman.h>
 #include <sys/ioctl.h>
+#include <errno.h>
 #endif
 
 #include "util.h"
 #include "asm-opt.h"
 #include "version.h"
+#include "pmem.h"
 
 #define SIZE (1024 * 1024 * 1024)
 #define BLOCKSIZE 2048
@@ -631,6 +633,55 @@ int latency_bench(size_t size, int count, int use_hugepage)
     return 1;
 }
 
+static void memtest(int threads, void *dstbuf, void *srcbuf, void *tmpbuf, size_t bufsize, size_t blocksize, const char *comment)
+{
+    printf("\n");
+    printf("==========================================================================\n");
+    if (NULL != comment)
+    {
+        printf("== %30s                                               ==\n", comment);
+    }
+    printf("== Memory bandwidth tests                                               ==\n");
+    printf("== size Bytes: %zu                                                ==\n", bufsize);
+    printf("== blocksize Bytes: %zu                                                ==\n", blocksize);
+    printf("==                                                                      ==\n");
+    printf("== Note 1: 1MB = 1000000 bytes                                          ==\n");
+    printf("== Note 2: Results for 'copy' tests show how many bytes can be          ==\n");
+    printf("==         copied per second (adding together read and written          ==\n");
+    printf("==         bytes would have provided twice higher numbers)              ==\n");
+    printf("== Note 3: 2-pass copy means that we are using a small temporary buffer ==\n");
+    printf("==         to first fetch data into it, and only then write it to the   ==\n");
+    printf("==         destination (source -> L1 cache, L1 cache -> destination)    ==\n");
+    printf("== Note 4: If sample standard deviation exceeds 0.1%%, it is shown in    ==\n");
+    printf("==         brackets                                                     ==\n");
+    printf("==========================================================================\n\n");
+
+    bandwidth_bench(threads, dstbuf, srcbuf, tmpbuf, bufsize, blocksize, " ", c_benchmarks);
+    printf(" ---\n");
+    bandwidth_bench(threads, dstbuf, srcbuf, tmpbuf, bufsize, blocksize, " ", libc_benchmarks);
+
+    bench_info *bi = get_asm_benchmarks();
+    if (bi && bi->f)
+    {
+        printf(" ---\n");
+        bandwidth_bench(threads, dstbuf, srcbuf, tmpbuf, bufsize, blocksize, " ", bi);
+    }
+
+    bench_info *bi_avx2 = get_avx2_benchmarks();
+    if (bi_avx2 && bi_avx2->f)
+    {
+        printf(" ---\n");
+        bandwidth_bench(threads, dstbuf, srcbuf, tmpbuf, bufsize, blocksize, " ", bi_avx2);
+    }
+
+    bench_info *bi_avx512 = get_avx512_benchmarks();
+    if (bi_avx512 && bi_avx512->f)
+    {
+        printf(" ---\n");
+        bandwidth_bench(threads, dstbuf, srcbuf, tmpbuf, bufsize, blocksize, " ", bi_avx512);
+    }
+}
+
 static void
 usage()
 {
@@ -651,7 +702,7 @@ int main(int argc, char *argv[])
     size_t latbench_size = (size_t)SIZE * 2;
     int latbench_count = LATBENCH_COUNT;
     int c;
-    int threads;
+    int threads = -1;
     size_t bufsize = SIZE;
     int blocksize = BLOCKSIZE;
     static int run_sse2 = 1;
@@ -659,6 +710,9 @@ int main(int argc, char *argv[])
     static int run_avx512 = 1;
     void *poolbuf = NULL;
     int64_t *srcbuf, *dstbuf, *tmpbuf;
+    const char *filename = NULL; // for DAX
+    int memfd = -1;
+    int total_cpu = sysconf(_SC_NPROCESSORS_ONLN);
 
     progname = argv[0];
     while (1)
@@ -670,7 +724,7 @@ int main(int argc, char *argv[])
             {0, 0, 0, 0}};
         /* getopt_long stores the option index here. */
         int option_index = 0;
-        c = getopt_long(argc, argv, "hb:c:l:s:", long_options, &option_index);
+        c = getopt_long(argc, argv, "hb:c:l:s:m:t:", long_options, &option_index);
         if (c == -1)
             break;
         switch (c)
@@ -695,92 +749,66 @@ int main(int argc, char *argv[])
         case 's':
             bufsize = atoi(optarg);
             break;
+        case 'm':
+            filename = strdup(optarg);
+            break;
+        case 't':
+            threads = atoi(optarg);
+            break;
         case 'h':
-            usage();
         default:
-            abort();
+            usage();
+            exit(1);
         }
     }
 
-#if 0
-    int threads;
-    int blocksize = BLOCKSIZE;
-    static int run_sse2 = 0;
-    static int run_avx2 = 0;
-    static int run_avx512 = 0;
-    int c;
-#endif // 0
-
     printf("tinymembench-pthread v" VERSION " (simple benchmark for memory throughput and latency)\n");
 
-    if (argc == 1)
+    if (threads < 1)
     {
         threads = 1;
         printf("Single thread test\n");
     }
-    else
-    {
-        int total_cpu;
+    printf("%d thread(s) on %d CPU\n", threads, total_cpu);
 
-        total_cpu = sysconf(_SC_NPROCESSORS_ONLN);
-        threads = atoi(argv[1]);
-        printf("%d threads on %d CPU\n", threads, total_cpu);
+    if (NULL != filename)
+    {
+        memfd = open_pmem_device(filename);
+        printf("Using memory device %s\n", filename);
+        if (-1 == memfd)
+        {
+            printf("Unable to open %s (%d): %s\n", filename, errno, strerror(errno));
+            exit(1);
+        }
+
+        if (1 != threads)
+        {
+            fprintf(stderr, "Currently, memory map only written to work with 1 thread\n");
+            exit(1);
+        }
+
+        // TODO: this is going to need to be modified to work with threads > 1
+        poolbuf = alloc_four_pmem_buffers((void **)&srcbuf, bufsize * threads,
+                                          (void **)&dstbuf, bufsize * threads,
+                                          (void **)&tmpbuf, BLOCKSIZE * threads,
+                                          NULL, 0, memfd);
+
+        if (NULL == poolbuf)
+        {
+            fprintf(stderr, "alloc_four_pmem_buffers failed\n");
+            exit(1);
+        }
+
+        // TODO: probably want to make this include the file name used
+        memtest(threads, dstbuf, srcbuf, tmpbuf, bufsize, blocksize, "TEST: FILE");
     }
 
     poolbuf = alloc_four_nonaliased_buffers((void **)&srcbuf, bufsize * threads,
                                             (void **)&dstbuf, bufsize * threads,
                                             (void **)&tmpbuf, BLOCKSIZE * threads,
                                             NULL, 0);
-    printf("\n");
-    printf("==========================================================================\n");
-    printf("== Memory bandwidth tests                                               ==\n");
-    printf("== size Bytes: %zu                                                ==\n", bufsize);
-    printf("== blocksize Bytes: %d                                                ==\n", blocksize);
-    printf("==                                                                      ==\n");
-    printf("== Note 1: 1MB = 1000000 bytes                                          ==\n");
-    printf("== Note 2: Results for 'copy' tests show how many bytes can be          ==\n");
-    printf("==         copied per second (adding together read and written          ==\n");
-    printf("==         bytes would have provided twice higher numbers)              ==\n");
-    printf("== Note 3: 2-pass copy means that we are using a small temporary buffer ==\n");
-    printf("==         to first fetch data into it, and only then write it to the   ==\n");
-    printf("==         destination (source -> L1 cache, L1 cache -> destination)    ==\n");
-    printf("== Note 4: If sample standard deviation exceeds 0.1%%, it is shown in    ==\n");
-    printf("==         brackets                                                     ==\n");
-    printf("==========================================================================\n\n");
 
-    bandwidth_bench(threads, dstbuf, srcbuf, tmpbuf, bufsize, blocksize, " ", c_benchmarks);
-    printf(" ---\n");
-    bandwidth_bench(threads, dstbuf, srcbuf, tmpbuf, bufsize, blocksize, " ", libc_benchmarks);
-
-    if (run_sse2)
-    {
-        bench_info *bi = get_asm_benchmarks();
-        if (bi && bi->f)
-        {
-            printf(" ---\n");
-            bandwidth_bench(threads, dstbuf, srcbuf, tmpbuf, bufsize, blocksize, " ", bi);
-        }
-    }
-
-    if (run_avx2)
-    {
-        bench_info *bi_avx2 = get_avx2_benchmarks();
-        if (bi_avx2 && bi_avx2->f)
-        {
-            printf(" ---\n");
-            bandwidth_bench(threads, dstbuf, srcbuf, tmpbuf, bufsize, blocksize, " ", bi_avx2);
-        }
-    }
-
-    if (run_avx512)
-    {
-        bench_info *bi_avx512 = get_avx512_benchmarks();
-        if (bi_avx512 && bi_avx512->f)
-        {
-            printf(" ---\n");
-            bandwidth_bench(threads, dstbuf, srcbuf, tmpbuf, bufsize, blocksize, " ", bi_avx512);
-        }
-    }
+    memtest(threads, dstbuf, srcbuf, tmpbuf, bufsize, blocksize, "Test: DRAM");
 
 #ifdef __linux__
     bench_info *bi = NULL;
