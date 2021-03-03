@@ -75,12 +75,6 @@ int open_pmem_device(const char *daxname)
                 fprintf(stderr, "Directory is unsupported\n");
                 break;
             }
-
-            if (st.st_size < 4096)
-            {
-                fprintf(stderr, "Size is too small\n");
-                break;
-            }
         }
 
         fd = open(buffer, O_RDWR);
