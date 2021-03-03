@@ -134,6 +134,7 @@ void *alloc_four_pmem_buffers(void **buf1_, size_t size1,
     }
     pmem_fd = memfd;
 
+    pmem_off = 0;
     pmem_map = mmap(NULL, space_needed, PROT_READ | PROT_WRITE, MAP_SHARED, pmem_fd, 0);
     if (MAP_FAILED == pmem_map)
     {
