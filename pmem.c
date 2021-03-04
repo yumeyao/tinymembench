@@ -162,3 +162,20 @@ void *alloc_four_pmem_buffers(void **buf1_, size_t size1,
 
     return pmem_map;
 }
+
+void free_pmem_buffers(void *pmem_buf)
+{
+    assert(NULL != pmem_buf);
+    assert(pmem_buf == pmem_map);
+
+    if (0 != munmap(pmem_buf, pmem_off))
+    {
+        fprintf(stderr, "%s: failed (%d): %s\n", __func__, errno, strerror(errno));
+        exit(1);
+    }
+}
+
+void *alloc_four_pmem_buffers(void **buf1_, size_t size1,
+                              void **buf2_, size_t size2,
+                              void **buf3_, size_t size3,
+                              void **buf4_, size_t size4, int memfd);
