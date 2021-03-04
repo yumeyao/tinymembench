@@ -116,15 +116,17 @@ void *alloc_four_pmem_buffers(void **buf1_, size_t size1,
                               void **buf3_, size_t size3,
                               void **buf4_, size_t size4, int memfd)
 {
-    int page1gb = 0;
-    int page2mb = 0;
-    int page4kb = 0;
+    // int page1gb = 0;
+    // int page2mb = 0;
+    // int page4kb = 0;
     size_t space_needed = ~0;
+    (void)pmem_4kb;
+    (void)pmem_2mb;
 
     space_needed = align_up1gb(size1) + align_up1gb(size2) + align_up1gb(size3) + align_up1gb(size4);
 
     // Gross overestimate
-    space_needed = size1 + size2 + size3 + size4 + (pmem_1gb * page1gb) + (pmem_2mb * page2mb) + (pmem_4kb * page4kb);
+    // space_needed = size1 + size2 + size3 + size4 + (pmem_1gb * page1gb) + (pmem_2mb * page2mb) + (pmem_4kb * page4kb);
 
     if (memfd < 0)
     {
@@ -136,8 +138,7 @@ void *alloc_four_pmem_buffers(void **buf1_, size_t size1,
     if (MAP_FAILED == pmem_map)
     {
         fprintf(stderr, "%s: mmap failed (%d): %s ", __func__, errno, strerror(errno));
-        close(pmem_fd);
-        pmem_fd = -1;
+        fprintf(stderr, "%s: space_needed = %zu\n", __func__, space_needed);
         return NULL;
     }
 
