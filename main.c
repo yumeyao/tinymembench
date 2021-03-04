@@ -745,6 +745,17 @@ usage()
     exit(EXIT_FAILURE);
 }
 
+#if defined(__linux__)
+static void set_linux_fifo_scheduler()
+{
+    /* Use FIFO scheduler to limit OS interference. Program must be run
+     as root, and this works only for Linux kernels. */
+    struct sched_param schedParam;
+    schedParam.sched_priority = sched_get_priority_max(SCHED_FIFO);
+    sched_setscheduler(0, SCHED_FIFO, &schedParam);
+}
+#endif
+
 int main(int argc, char *argv[])
 {
     size_t latbench_size = (size_t)SIZE * 2;
@@ -761,6 +772,12 @@ int main(int argc, char *argv[])
     const char *filename = NULL; // for DAX
     int memfd = -1;
     int total_cpu = sysconf(_SC_NPROCESSORS_ONLN);
+
+    if (0 == geteuid())
+    {
+        printf("Using FIFO scheduler\n");
+        set_linux_fifo_scheduler();
+    }
 
     progname = argv[0];
     while (1)
