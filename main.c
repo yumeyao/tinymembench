@@ -526,56 +526,60 @@ static uint32_t rand32()
     return (hi << 16) + lo;
 }
 
-int latency_bench(size_t size, int count, int use_hugepage)
+static int pmem_latency_bench(size_t size, int count, int memfd)
+{
+    void *poolbuf = NULL;
+    void *buffer = NULL;
+
+    if (memfd < 0)
+    {
+        return;
+    }
+
+    poolbuf = alloc_four_pmem_buffers(&buffer, size, NULL, 0, NULL, 0, NULL, 0, memfd);
+    if (NULL != poolbuf)
+    {
+        fprintf(stderr, "%s: failed\n", __func__);
+        exit(1);
+    }
+}
+
+memset(buffer, 0, size);
+
+for (n = 1; n <= MAXREPEATS; n++)
+{
+    t_before = gettime();
+    random_read_test(buffer, count, 1);
+    t_after = gettime();
+    if (n == 1 || t_after - t_before < t_noaccess)
+        t_noaccess = t_after - t_before;
+
+    t_before = gettime();
+    random_dual_read_test(buffer, count, 1);
+    t_after = gettime();
+    t_noaccess2 = 0.0;
+    if (n == 1 || t_after - t_before < t_noaccess2)
+        t_noaccess2 = t_after - t_before;
+}
+
+static void latency_bench_with_buffer(void *buffer, size_t size, const char *comment)
 {
     double t, t2, t_before, t_after, t_noaccess, t_noaccess2;
     double xs, xs1, xs2;
     double ys, ys1, ys2;
     double min_t, min_t2;
     int nbits, n;
-    char *buffer, *buffer_alloc;
-#if !defined(__linux__) || !defined(MADV_HUGEPAGE)
-    if (use_hugepage)
-        return 0;
-    buffer_alloc = (char *)malloc(size + 4095);
-    if (!buffer_alloc)
-        return 0;
-    buffer = (char *)(((uintptr_t)buffer_alloc + 4095) & ~(uintptr_t)4095);
-#else
-    if (posix_memalign((void **)&buffer_alloc, 4 * 1024 * 1024, size) != 0)
-        return 0;
-    buffer = buffer_alloc;
-    if (use_hugepage && madvise(buffer, size, use_hugepage > 0 ? MADV_HUGEPAGE : MADV_NOHUGEPAGE) != 0)
-    {
-        free(buffer_alloc);
-        return 0;
-    }
-#endif
-    memset(buffer, 0, size);
-
-    for (n = 1; n <= MAXREPEATS; n++)
-    {
-        t_before = gettime();
-        random_read_test(buffer, count, 1);
-        t_after = gettime();
-        if (n == 1 || t_after - t_before < t_noaccess)
-            t_noaccess = t_after - t_before;
-
-        t_before = gettime();
-        random_dual_read_test(buffer, count, 1);
-        t_after = gettime();
-        t_noaccess2 = 0.0;
-        if (n == 1 || t_after - t_before < t_noaccess2)
-            t_noaccess2 = t_after - t_before;
-    }
 
     printf("\nblock size : single random read / dual random read");
-    if (use_hugepage > 0)
-        printf(", [MADV_HUGEPAGE]\n");
-    else if (use_hugepage < 0)
-        printf(", [MADV_NOHUGEPAGE]\n");
-    else
+
+    if (NULL == comment)
+    {
         printf("\n");
+    }
+    else
+    {
+        printf("%s\n", comment);
+    }
 
     for (nbits = 10; (1 << nbits) <= size; nbits++)
     {
@@ -630,6 +634,41 @@ int latency_bench(size_t size, int count, int use_hugepage)
                min_t * 1000000000. / count, min_t2 * 1000000000. / count);
     }
     free(buffer_alloc);
+}
+int latency_bench(size_t size, int count, int use_hugepage)
+{
+    char *buffer, *buffer_alloc;
+
+#if !defined(__linux__) || !defined(MADV_HUGEPAGE)
+    if (use_hugepage)
+        return 0;
+    buffer_alloc = (char *)malloc(size + 4095);
+    if (!buffer_alloc)
+        return 0;
+    buffer = (char *)(((uintptr_t)buffer_alloc + 4095) & ~(uintptr_t)4095);
+#else
+    if (posix_memalign((void **)&buffer_alloc, 4 * 1024 * 1024, size) != 0)
+        return 0;
+    buffer = buffer_alloc;
+    if (use_hugepage && madvise(buffer, size, use_hugepage > 0 ? MADV_HUGEPAGE : MADV_NOHUGEPAGE) != 0)
+    {
+        free(buffer_alloc);
+        return 0;
+    }
+#endif
+    if (use_hugepage > 0)
+    {
+        latency_bench_with_buffer(buffer, size, ", [MADV_HUGEPAGE]");
+    }
+    else if (use_hugepage < 0)
+    {
+        latency_bench_with_buffer(buffer, size, ", [MADV_NOHUGEPAGE]");
+    }
+    else
+    {
+        latency_bench_with_buffer(buffer, size, "");
+    }
+
     return 1;
 }
 
@@ -771,6 +810,7 @@ int main(int argc, char *argv[])
     }
     printf("%d thread(s) on %d CPU\n", threads, total_cpu);
 
+#if 0
     if (NULL != filename)
     {
         memfd = open_pmem_device(filename);
@@ -801,6 +841,9 @@ int main(int argc, char *argv[])
 
         // TODO: probably want to make this include the file name used
         memtest(threads, dstbuf, srcbuf, tmpbuf, bufsize, blocksize, "TEST: FILE");
+
+        free_pmem_buffers(poolbuf);
+        poolbuf = NULL;
     }
 
     poolbuf = alloc_four_nonaliased_buffers((void **)&srcbuf, bufsize * threads,
@@ -849,6 +892,7 @@ int main(int argc, char *argv[])
 #endif
 
     free(poolbuf);
+#endif // 0
 
     printf("\n");
     printf("==========================================================================\n");
