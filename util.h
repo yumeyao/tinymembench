@@ -29,6 +29,10 @@
 double gettime(void);
 double fmin(double, double);
 
+void stream_copy(int64_t *__restrict dst,
+                 int64_t *__restrict src,
+                 size_t size);
+
 void aligned_block_copy(int64_t *__restrict dst,
                         int64_t *__restrict src,
                         size_t size);

@@ -404,3 +404,17 @@ void *alloc_four_nonaliased_buffers(void **buf1_, size_t size1,
 
     return buf;
 }
+
+void stream_copy(int64_t *__restrict dst,
+                 int64_t *__restrict src,
+                 size_t size)
+{
+    size_t element_size = sizeof(unsigned long long);
+    size_t array_size = size / element_size;
+
+#pragma omp parallel for
+    for (size_t j = 0; j < size / sizeof(int64_t); j++)
+    {
+        dst[j] = src[j];
+    }
+}

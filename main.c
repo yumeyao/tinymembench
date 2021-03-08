@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <sys/time.h>
+#include <omp.h>
 
 #if !defined(_WIN64) && !defined(_WIN32)
 #include <unistd.h>
@@ -308,6 +309,7 @@ void memset_wrapper(int64_t *dst, int64_t *src, size_t size)
 
 static bench_info c_benchmarks[] =
     {
+        {"C stream copy", 0, stream_copy},
         {"C copy backwards", 0, aligned_block_copy_backwards},
         {"C copy backwards (32 byte blocks)", 0, aligned_block_copy_backwards_bs32},
         {"C copy backwards (64 byte blocks)", 0, aligned_block_copy_backwards_bs64},
@@ -761,7 +763,6 @@ int main(int argc, char *argv[])
     size_t latbench_size = (size_t)SIZE * 2;
     int latbench_count = LATBENCH_COUNT;
     int c;
-    int threads = -1;
     size_t bufsize = SIZE;
     int blocksize = BLOCKSIZE;
     static int run_sse2 = 1;
@@ -772,6 +773,7 @@ int main(int argc, char *argv[])
     const char *filename = NULL; // for DAX
     int memfd = -1;
     int total_cpu = sysconf(_SC_NPROCESSORS_ONLN);
+    int threads = 0;
 
     if (0 == geteuid())
     {
@@ -833,6 +835,12 @@ int main(int argc, char *argv[])
     {
         threads = 1;
         printf("Single thread test\n");
+    }
+
+    if (threads > total_cpu)
+    {
+        printf("Reduce %d threads (to %d CPUs)\n", threads, total_cpu);
+        threads = total_cpu;
     }
     printf("%d thread(s) on %d CPU\n", threads, total_cpu);
 
