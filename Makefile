@@ -1,5 +1,5 @@
 LDFLAGS ?= -pthread
-CFLAGS  ?= -march=native -Wall # -ggdb -O0
+CFLAGS  ?= -fopenmp -march=native -Wall # -ggdb -O0
 
 all: tinymembench
 

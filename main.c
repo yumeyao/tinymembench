@@ -741,9 +741,10 @@ usage()
     fprintf(stderr, "\t-l Latency test maximum buffer size in Bytes <%ld>\n", (size_t)SIZE * 2);
     fprintf(stderr, "\t-c Latency count <%d>\n", LATBENCH_COUNT);
     fprintf(stderr, "\t-m Memory map file (PMEM/DAX) <name>\n");
-    fprintf(stderr, "\t--run_sse Include SSE2 tests <false>\n");
-    fprintf(stderr, "\t--run_sse Include AVX2 tests <false>\n");
-    fprintf(stderr, "\t--run_sse Include AVX512 tests <false>\n");
+    // fprintf(stderr, "\t--run_sse Include SSE2 tests <false>\n");
+    //  fprintf(stderr, "\t--run_sse Include AVX2 tests <false>\n");
+    // fprintf(stderr, "\t--run_sse Include AVX512 tests <false>\n");
+    fprintf(stderr, "\t-t Thread count, 0 means %ld (max)\n", sysconf(_SC_NPROCESSORS_ONLN));
     exit(EXIT_FAILURE);
 }
 
@@ -764,6 +765,7 @@ int main(int argc, char *argv[])
     int latbench_count = LATBENCH_COUNT;
     int c;
     size_t bufsize = SIZE;
+    size_t pmem_bufsize;
     int blocksize = BLOCKSIZE;
     static int run_sse2 = 1;
     static int run_avx2 = 1;
@@ -773,7 +775,7 @@ int main(int argc, char *argv[])
     const char *filename = NULL; // for DAX
     int memfd = -1;
     int total_cpu = sysconf(_SC_NPROCESSORS_ONLN);
-    int threads = 0;
+    int threads = -1;
 
     if (0 == geteuid())
     {
@@ -831,10 +833,15 @@ int main(int argc, char *argv[])
 
     printf("tinymembench-pthread v" VERSION " (simple benchmark for memory throughput and latency)\n");
 
-    if (threads < 1)
+    if (threads < 0)
     {
         threads = 1;
         printf("Single thread test\n");
+    }
+
+    if (0 == threads)
+    {
+        threads = total_cpu;
     }
 
     if (threads > total_cpu)
@@ -860,9 +867,10 @@ int main(int argc, char *argv[])
             exit(1);
         }
 
-        // TODO: this is going to need to be modified to work with threads > 1
-        poolbuf = alloc_four_pmem_buffers((void **)&srcbuf, bufsize * threads,
-                                          (void **)&dstbuf, bufsize * threads,
+        pmem_bufsize = align_up1gb(bufsize);
+
+        poolbuf = alloc_four_pmem_buffers((void **)&srcbuf, pmem_bufsize * threads,
+                                          (void **)&dstbuf, pmem_bufsize * threads,
                                           (void **)&tmpbuf, BLOCKSIZE * threads,
                                           NULL, 0, memfd);
 
@@ -873,7 +881,7 @@ int main(int argc, char *argv[])
         }
 
         // TODO: probably want to make this include the file name used
-        memtest(threads, dstbuf, srcbuf, tmpbuf, bufsize, blocksize, "TEST: FILE");
+        memtest(threads, dstbuf, srcbuf, tmpbuf, pmem_bufsize, blocksize, "TEST: FILE");
 
         free_pmem_buffers(poolbuf);
         poolbuf = NULL;
