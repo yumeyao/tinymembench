@@ -149,6 +149,7 @@ static bench_info x86_sse2[] =
         {"SSE2 2-pass nontemporal copy", 1, aligned_block_copy_nt_sse2},
         {"SSE2 fill", 0, aligned_block_fill_sse2},
         {"SSE2 nontemporal fill", 0, aligned_block_fill_nt_sse2},
+        {"SSE2 nontemporal fill loop", 0, aligned_block_fill_nt_loop_sse2},
         {NULL, 0, NULL}};
 
 static bench_info x86_sse2_fb[] =

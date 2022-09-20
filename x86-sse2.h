@@ -73,6 +73,10 @@ extern "C"
                                     int64_t *__restrict src,
                                     size_t size);
 
+    void aligned_block_fill_nt_loop_sse2(int64_t *__restrict dst,
+                                         int64_t *__restrict src,
+                                         size_t size);
+
 #ifdef __cplusplus
 }
 #endif

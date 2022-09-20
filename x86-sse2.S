@@ -47,8 +47,8 @@
     mov  ecx,  [esp + 8]
     mov  edx,  [esp + 12]
     .set DST,  eax
-    .set SRC,  ecx
-    .set SIZE, edx
+    .set SRC,  edx
+    .set SIZE, ecx
 #endif
 .endm
 
@@ -285,6 +285,26 @@ asm_function aligned_block_fill_nt_sse2
     add         DST,        64
     sub         SIZE,       64
     jg          0b
+    ret
+.endfunc
+
+asm_function aligned_block_fill_nt_loop_sse2
+    movdqa      xmm0,       [SRC + 0]
+    mov         SRC,        DST
+#ifdef __amd64__
+    lea         rcx,        [SIZE - 64]
+    shr         rcx, 6
+#else
+    lea         ecx,        [SIZE - 64]
+    shr         ecx, 6
+#endif
+0:
+    movntdq     [SRC + 0],  xmm0
+    movntdq     [SRC + 16], xmm0
+    movntdq     [SRC + 32], xmm0
+    movntdq     [SRC + 48], xmm0
+    add         SRC,        64
+    loop        0b
     ret
 .endfunc
 
