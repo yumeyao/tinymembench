@@ -40,6 +40,9 @@ extern "C"
     void aligned_block_fill_stosb(int64_t *__restrict dst,
                                   int64_t *__restrict src,
                                   size_t size);
+    void aligned_block_fill_stosd(int64_t *__restrict dst,
+                                  int64_t *__restrict src,
+                                  size_t size);
 
     void aligned_block_copy_sse2(int64_t *__restrict dst,
                                  int64_t *__restrict src,

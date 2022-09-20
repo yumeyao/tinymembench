@@ -132,6 +132,28 @@ asm_function aligned_block_fill_stosb
     ret
 .endfunc
 
+asm_function aligned_block_fill_stosd
+0:
+#ifdef __amd64__
+    push3       rdi rsi rcx
+    push3       DST SRC SIZE
+    pop3        rdi rsi rcx
+    mov eax, [rsi + 0]
+    sar         rcx, 2
+    rep stosd
+    pop3        rdi rsi rcx
+#else
+    push3       edi esi ecx
+    push3       DST SRC SIZE
+    pop3        edi esi ecx
+    sar         ecx, 2
+    mov eax, [esi + 0]
+    rep stosd
+    pop3        edi esi ecx
+#endif
+    ret
+.endfunc
+
 asm_function aligned_block_copy_sse2
 0:
     movdqa      xmm0,       [SRC + 0]
